@@ -1,5 +1,8 @@
 .idea/
 .firebase/
+node_modules/
+
 .firebaserc
 
 .env
+*.log
