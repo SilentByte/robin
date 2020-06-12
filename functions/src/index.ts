@@ -49,6 +49,7 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
         message: message.text,
         context: {
             name: message.from.first_name || message.from.username,
+            jokeCounter: 0,
         },
     });
 

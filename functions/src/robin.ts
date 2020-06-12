@@ -12,6 +12,7 @@ function squash(message: string): string {
 
 export interface IRobinContext {
     name?: string;
+    jokeCounter: number;
 }
 
 export interface IRobinSession {
@@ -33,6 +34,12 @@ export const ROBIN_MESSAGES = {
     messageTypeNotSupported: squash(`
         Oh no, looks like I haven't received training for this message format yet. 😔
     `),
+    outOfJokes: "I think that's enough for now. I'm an accountant, not a comedian. 😉",
+    jokes: [
+        squash(`I can't imagine living without an accountant... It must be *accural* world. 🌎 `),
+        squash(`I almost fell down the stairs the other day... I lost *my balance*. ☺️`),
+        squash(`Aww! 🤗 Thanks for your kind gift, I really *depreciate* it!`),
+    ],
 };
 
 export class Robin {
@@ -66,9 +73,17 @@ export class Robin {
 
     async process(session: IRobinSession): Promise<IRobinResult> {
         const response = await this.sendMessage(session.message, session.timestamp);
+
+        let message;
+        if(response.intents.some((i: any) => i.name === "tell_joke")) {
+            message = ROBIN_MESSAGES.jokes[session.context.jokeCounter] || ROBIN_MESSAGES.outOfJokes;
+        } else {
+            message = JSON.stringify(response);
+        }
+
         return {
             context: session.context,
-            message: JSON.stringify(response),
+            message,
         };
     }
 }
