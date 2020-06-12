@@ -33,7 +33,9 @@ export class Robin {
     private async sendMessage(message: string, timestamp: DateTime): Promise<any> {
         const response = await axios.get(this.url, {
             headers: {
-                Authorization: `Bearer ${this.token}`,
+                "Authorization": `Bearer ${this.token}`,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
             },
             params: {
                 v: this.version,
@@ -44,7 +46,7 @@ export class Robin {
             },
         });
 
-        console.log(response.data)
+        console.log(response.data);
         return response.data;
     }
 
