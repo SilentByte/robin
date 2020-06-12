@@ -23,9 +23,12 @@ export interface IRobinSession {
 
 export interface IRobinResult {
     context: IRobinContext;
-    message: string;
+    messages: string[];
 }
 
+// TODO: Replace with proper messaging system that can easily format text
+//       and replace placeholders with actual values. Also set up message
+//       formatting (e.g. *bold* for Telegram).
 export const ROBIN_MESSAGES = {
     voiceNotSupported: squash(`
         I'm sorry, I can't understand voice messages at the moment. 😔
@@ -34,9 +37,14 @@ export const ROBIN_MESSAGES = {
     messageTypeNotSupported: squash(`
         Oh no, looks like I haven't received training for this message format yet. 😔
     `),
+    greetings: [
+        squash(`Hey %NAME, how's it going?`),
+        squash(`Oh hi, %NAME, how can I help?`),
+        squash(`Hi there!`),
+    ],
     outOfJokes: "I think that's enough for now. I'm an accountant, not a comedian. 😉",
     jokes: [
-        squash(`I can't imagine living without an accountant... It must be *accural* world. 🌎 `),
+        squash(`I can't imagine living without an accountant... It must be *accrual* life. 🌎😂`),
         squash(`I almost fell down the stairs the other day... I lost *my balance*. ☺️`),
         squash(`Aww! 🤗 Thanks for your kind gift, I really *depreciate* it!`),
     ],
@@ -74,16 +82,21 @@ export class Robin {
     async process(session: IRobinSession): Promise<IRobinResult> {
         const response = await this.sendMessage(session.message, session.timestamp);
 
-        let message;
+        const messages = [];
+        if(response.traits.wit$greetings) {
+            messages.push(ROBIN_MESSAGES.greetings[Math.floor(Math.random() * ROBIN_MESSAGES.greetings.length) - 1]
+                .replace("%NAME", session.context.name || "friend"));
+        }
+
         if(response.intents.some((i: any) => i.name === "tell_joke")) {
-            message = ROBIN_MESSAGES.jokes[session.context.jokeCounter] || ROBIN_MESSAGES.outOfJokes;
+            messages.push(ROBIN_MESSAGES.jokes[session.context.jokeCounter] || ROBIN_MESSAGES.outOfJokes);
         } else {
-            message = JSON.stringify(response);
+            messages.push(JSON.stringify(response));
         }
 
         return {
             context: session.context,
-            message,
+            messages,
         };
     }
 }

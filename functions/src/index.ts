@@ -54,7 +54,9 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
     });
 
     console.log("Sending Telegram response...");
-    await sendTelegram(message.chat.id, result.message);
+    for(const m of result.messages) {
+        await sendTelegram(message.chat.id, m);
+    }
 
     response.end();
 });
