@@ -6,6 +6,10 @@
 import axios from "axios";
 import { DateTime } from "luxon";
 
+function squash(message: string): string {
+    return message.replace(/\s+/g, " ");
+}
+
 export interface IRobinContext {
     name?: string;
 }
@@ -20,6 +24,16 @@ export interface IRobinResult {
     context: IRobinContext;
     message: string;
 }
+
+export const ROBIN_MESSAGES = {
+    voiceNotSupported: squash(`
+        I'm sorry, I can't understand voice messages at the moment. 😔
+        My team and I are working on it! 🔨😃
+    `),
+    messageTypeNotSupported: squash(`
+        Oh no, looks like I haven't received training for this message format yet. 😔
+    `),
+};
 
 export class Robin {
     private readonly url = "https://api.wit.ai/message";

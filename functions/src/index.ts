@@ -6,7 +6,7 @@
 import * as functions from "firebase-functions";
 import axios from "axios";
 import { DateTime } from "luxon";
-import { Robin } from "./robin";
+import { Robin, ROBIN_MESSAGES } from "./robin";
 
 const config = functions.config();
 const robin = new Robin({
@@ -22,37 +22,38 @@ async function sendTelegram(chatId: string, message: string): Promise<string> {
 
 export const robinTelegram = functions.https.onRequest(async (request, response) => {
     if(request.query.token !== config.telegram.authenticity_token) {
-        console.error("Caller provided invalid authenticity token");
+        console.error("Caller provided invalid Telegram authenticity token");
         response.status(403).end();
         return;
     }
 
-    console.log("Caller is authorized");
+    console.log("Received Telegram message:");
+    console.log(request.body);
 
-    const userId = request.body?.message?.from?.id;
-    const chatId = request.body?.message?.chat?.id;
-    const timestamp = request.body?.message?.date;
-    const name = request.body?.message?.from?.first_name || request.body?.message?.from?.username;
-    const message = request.body?.message?.text;
-
-    if(!userId || !chatId || !message || !timestamp) {
-        console.warn("Received malformed message");
-        console.warn(request.body);
-        response.status(400).end();
+    const message = request.body.message;
+    if(message.voice) {
+        console.warn("Declining voice message");
+        await sendTelegram(message.chat.id, ROBIN_MESSAGES.voiceNotSupported);
+        response.end();
+        return;
+    } else if(!message.text) {
+        console.warn("Message type is not supported");
+        await sendTelegram(message.chat.id, ROBIN_MESSAGES.messageTypeNotSupported);
+        response.end();
         return;
     }
 
     console.log("Querying Robin...");
     const result = await robin.process({
-        timestamp: DateTime.fromSeconds(timestamp), // TODO: Adjust timezone based on user location.
-        message: message,
+        timestamp: DateTime.fromSeconds(message.date), // TODO: Adjust timezone based on user location.
+        message: message.text,
         context: {
-            name,
+            name: message.from.first_name || message.from.username,
         },
     });
 
     console.log("Sending Telegram response...");
-    await sendTelegram(chatId, result.message);
+    await sendTelegram(message.chat.id, result.message);
 
     response.end();
 });
