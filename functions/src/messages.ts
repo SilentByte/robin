@@ -22,6 +22,11 @@ const RAW_MESSAGES = yaml.parse(`
   genericGreeting:
     - Hi there! 😃
 
+  think:
+    - Alright 🤔, let's see...
+    - Hmm...
+    - Okay, so...
+
   doneJoking:
     - I think that's enough for now. I'm an accountant, not a comedian. 😉
 

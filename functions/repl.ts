@@ -6,8 +6,8 @@
 import * as readline from "readline";
 import { DateTime } from "luxon";
 import {
-    IRobinContext
-    , Robin,
+    IRobinContext,
+    Robin,
 } from "./src/robin";
 
 const rl = readline.createInterface({
