@@ -32,7 +32,7 @@ export interface IRobinResult {
 export const ROBIN_MESSAGES = {
     voiceNotSupported: squash(`
         I'm sorry, I can't understand voice messages at the moment. 😔
-        My team and I are working on it! 🔨😃
+        My team and I are working on it! 🔨 😃
     `),
     messageTypeNotSupported: squash(`
         Oh no, looks like I haven't received training for this message format yet. 😔
@@ -44,9 +44,9 @@ export const ROBIN_MESSAGES = {
     ],
     outOfJokes: "I think that's enough for now. I'm an accountant, not a comedian. 😉",
     jokes: [
-        squash(`I can't imagine living without an accountant... It must be <b>accrual</b> life. 🌎😂`),
+        squash(`I can't imagine living without an accountant... It must be <b>accrual</b> life. 🌎 😂`),
         squash(`I almost fell down the stairs the other day... I lost <b>my balance</b>. ☺️`),
-        squash(`Aww! 🤗 Thanks for your kind gift, I really <b>depreciate</b> it!`),
+        squash(`Aww! 🤗 Thanks for your kind gift 🎁, I really <b>depreciate</b> it!`),
     ],
 };
 
@@ -90,20 +90,22 @@ export class Robin {
     async process(session: IRobinSession): Promise<IRobinResult> {
         const response = await this.sendMessage(session.message, session.timestamp);
 
+        let context = Object.assign({}, session.context);
         const messages = [];
         if(response.traits.wit$greetings) {
             messages.push(ROBIN_MESSAGES.greetings[Math.floor(Math.random() * ROBIN_MESSAGES.greetings.length)]
-                .replace("%NAME", session.context.name || "friend"));
+                .replace("%NAME", context.name || "friend"));
         }
 
         if(response.intents.some((i: any) => i.name === "tell_joke")) {
-            messages.push(ROBIN_MESSAGES.jokes[session.context.jokeCounter] || ROBIN_MESSAGES.outOfJokes);
+            messages.push(ROBIN_MESSAGES.jokes[context.jokeCounter] || ROBIN_MESSAGES.outOfJokes);
+            context.jokeCounter = Math.min(context.jokeCounter + 1, ROBIN_MESSAGES.jokes.length);
         } else {
             messages.push(JSON.stringify(response));
         }
 
         return {
-            context: session.context,
+            context,
             messages,
         };
     }

@@ -60,7 +60,7 @@ function formatMessage(message: string) {
 
         console.log("");
         result.messages.forEach((m, i, a) => {
-            console.log(`[${i + 1}/${a.length}] ${formatMessage(m)}`);
+            console.log(`${i + 1}) ${formatMessage(m)}`);
             console.log("");
         });
     }

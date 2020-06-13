@@ -22,7 +22,7 @@ async function sendTelegram(chatId: string, message: string): Promise<string> {
             parse_mode: "HTML",
         });
     } catch(e) {
-        console.log(e);
+        console.error(e);
         throw e;
     }
 }
