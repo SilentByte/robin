@@ -8,7 +8,7 @@ import { DateTime } from "luxon";
 import { ROBIN_MESSAGES } from "./messages";
 
 export interface IRobinContext {
-    userName?: string;
+    userName: string;
     lastMessageOn: DateTime;
     messageCounter: number;
     lastGreetingOn: DateTime;
