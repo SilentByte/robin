@@ -21,7 +21,7 @@ const robin = new Robin({
 });
 
 function prompt(): Promise<string> {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
         rl.question("robin> ", input => {
             resolve(input);
         });
@@ -45,6 +45,8 @@ function formatMessage(message: string) {
     while(true) {
         const message = (await prompt()).trim();
         if(!message) {
+            continue;
+        } else if(message === "exit") {
             break;
         }
 
@@ -62,4 +64,6 @@ function formatMessage(message: string) {
             console.log("");
         });
     }
+
+    rl.close();
 })();
