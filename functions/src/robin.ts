@@ -57,7 +57,7 @@ export class Robin {
             },
             params: {
                 v: this.version,
-                q: message,
+                q: message.slice(0, 280),
                 context: JSON.stringify({
                     reference_time: timestamp.toISO(),
                 }),
