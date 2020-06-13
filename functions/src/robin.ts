@@ -20,6 +20,7 @@ interface IEphemeralContext {
     bye: boolean;
     thanks: boolean;
     sentiment: "negative" | "neutral" | "positive";
+    intents: string[];
 }
 
 export interface IRobinSession {
@@ -70,18 +71,22 @@ export class Robin {
         return response.data;
     }
 
-    private static processTraits(response: any, context: IRobinContext, ephemeral: IEphemeralContext) {
-        ephemeral.greetings = !!response.traits.wit$greetings;
-        ephemeral.bye = !!response.traits.wit$bye;
-        ephemeral.thanks = !!response.traits.wit$thanks;
+    private static processTraits(wit: any, ephemeral: IEphemeralContext) {
+        ephemeral.greetings = !!wit.traits.wit$greetings;
+        ephemeral.bye = !!wit.traits.wit$bye;
+        ephemeral.thanks = !!wit.traits.wit$thanks;
 
-        if(response.traits.wit$sentiment) {
-            ephemeral.sentiment = response.traits.wit$sentiment[0].value;
+        if(wit.traits.wit$sentiment) {
+            ephemeral.sentiment = wit.traits.wit$sentiment[0].value;
         }
     }
 
+    private static processIntents(wit: any, ephemeral: IEphemeralContext) {
+        ephemeral.intents = wit.intents.map((i: any) => i.name);
+    }
+
     async process(session: IRobinSession): Promise<IRobinResult> {
-        const response = await this.queryWit(session.message, session.timestamp);
+        const wit = await this.queryWit(session.message, session.timestamp);
 
         const context = Object.assign({}, session.context);
         const ephemeral: IEphemeralContext = {
@@ -89,12 +94,14 @@ export class Robin {
             bye: false,
             thanks: false,
             sentiment: "neutral",
+            intents: [],
         };
 
-        Robin.processTraits(response, context, ephemeral);
+        Robin.processTraits(wit, ephemeral);
+        Robin.processIntents(wit, ephemeral);
 
         const messages = [];
-        if(response.traits.wit$greetings) {
+        if(ephemeral.greetings) {
             if(context.userName) {
                 messages.push(ROBIN_MESSAGES.personalGreeting.any({name: context.userName}));
             } else {
@@ -102,12 +109,12 @@ export class Robin {
             }
         }
 
-        if(response.intents.some((i: any) => i.name === "tell_joke")) {
+        if(ephemeral.intents.includes("tell_joke")) {
             messages.push(ROBIN_MESSAGES.joke.get(context.jokeCounter, ROBIN_MESSAGES.doneJoking.any()));
             context.jokeCounter = Math.min(context.jokeCounter + 1, ROBIN_MESSAGES.joke.length);
             context.lastJokeOn = DateTime.local();
         } else {
-            messages.push(JSON.stringify(response));
+            messages.push(JSON.stringify(wit));
         }
 
         context.lastMessageOn = session.timestamp;
