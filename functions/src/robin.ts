@@ -54,9 +54,14 @@ export class Robin {
     private readonly url = "https://api.wit.ai/message";
     private readonly version = "20200612";
     private readonly token: string;
+    private readonly log: boolean;
 
-    constructor(options: { token: string }) {
+    constructor(options: {
+        token: string;
+        log: boolean;
+    }) {
         this.token = options.token;
+        this.log = options.log;
     }
 
     private async sendMessage(message: string, timestamp: DateTime): Promise<any> {
@@ -75,7 +80,10 @@ export class Robin {
             },
         });
 
-        console.log(response.data);
+        if(this.log) {
+            console.log(response.data);
+        }
+
         return response.data;
     }
 

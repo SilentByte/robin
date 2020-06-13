@@ -11,6 +11,7 @@ import { Robin, ROBIN_MESSAGES } from "./robin";
 const config = functions.config();
 const robin = new Robin({
     token: config.wit.access_token,
+    log: true,
 });
 
 async function sendTelegram(chatId: string, message: string): Promise<string> {
@@ -26,6 +27,7 @@ async function sendTelegram(chatId: string, message: string): Promise<string> {
     }
 }
 
+// noinspection JSUnusedGlobalSymbols
 export const robinTelegram = functions.https.onRequest(async (request, response) => {
     response.end();
 
