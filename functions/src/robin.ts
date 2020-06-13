@@ -5,14 +5,13 @@
 
 import axios from "axios";
 import { DateTime } from "luxon";
-
-function squash(message: string): string {
-    return message.replace(/\s+/g, " ");
-}
+import { ROBIN_MESSAGES } from "./messages";
 
 export interface IRobinContext {
-    name?: string;
+    userName?: string;
+    lastMessageOn: DateTime;
     jokeCounter: number;
+    lastJokeOn: DateTime;
 }
 
 export interface IRobinSession {
@@ -25,30 +24,6 @@ export interface IRobinResult {
     context: IRobinContext;
     messages: string[];
 }
-
-// TODO: Replace with proper messaging system that can easily format text
-//       and replace placeholders with actual values. Also set up message
-//       formatting (e.g. *bold* for Telegram).
-export const ROBIN_MESSAGES = {
-    voiceNotSupported: squash(`
-        I'm sorry, I can't understand voice messages at the moment. 😔
-        My team and I are working on it! 🔨 😃
-    `),
-    messageTypeNotSupported: squash(`
-        Oh no, looks like I haven't received training for this message format yet. 😔
-    `),
-    greetings: [
-        squash(`Hey %NAME, how's it going?`),
-        squash(`Oh hi, %NAME, how can I help?`),
-        squash(`Hi there!`),
-    ],
-    outOfJokes: "I think that's enough for now. I'm an accountant, not a comedian. 😉",
-    jokes: [
-        squash(`I can't imagine living without an accountant... It must be <b>accrual</b> life. 🌎 😂`),
-        squash(`I almost fell down the stairs the other day... I lost <b>my balance</b>. ☺️`),
-        squash(`Aww! 🤗 Thanks for your kind gift 🎁, I really <b>depreciate</b> it!`),
-    ],
-};
 
 export class Robin {
     private readonly url = "https://api.wit.ai/message";
@@ -93,16 +68,22 @@ export class Robin {
         let context = Object.assign({}, session.context);
         const messages = [];
         if(response.traits.wit$greetings) {
-            messages.push(ROBIN_MESSAGES.greetings[Math.floor(Math.random() * ROBIN_MESSAGES.greetings.length)]
-                .replace("%NAME", context.name || "friend"));
+            if(context.userName) {
+                messages.push(ROBIN_MESSAGES.personalGreeting.any({name: context.userName}));
+            } else {
+                messages.push(ROBIN_MESSAGES.genericGreeting.any());
+            }
         }
 
         if(response.intents.some((i: any) => i.name === "tell_joke")) {
-            messages.push(ROBIN_MESSAGES.jokes[context.jokeCounter] || ROBIN_MESSAGES.outOfJokes);
-            context.jokeCounter = Math.min(context.jokeCounter + 1, ROBIN_MESSAGES.jokes.length);
+            messages.push(ROBIN_MESSAGES.joke.get(context.jokeCounter, ROBIN_MESSAGES.doneJoking.any()));
+            context.jokeCounter = Math.min(context.jokeCounter + 1, ROBIN_MESSAGES.joke.length);
+            context.lastJokeOn = DateTime.local();
         } else {
             messages.push(JSON.stringify(response));
         }
+
+        context.lastMessageOn = session.timestamp;
 
         return {
             context,
@@ -110,4 +91,3 @@ export class Robin {
         };
     }
 }
-

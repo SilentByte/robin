@@ -38,8 +38,10 @@ function formatMessage(message: string) {
 
 (async () => {
     let context: IRobinContext = {
-        name: "Rico",
+        userName: "Rico",
+        lastMessageOn: DateTime.local(),
         jokeCounter: 0,
+        lastJokeOn: DateTime.fromSeconds(0),
     };
 
     while(true) {

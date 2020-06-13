@@ -55,8 +55,10 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
         timestamp: DateTime.fromSeconds(message.date), // TODO: Adjust timezone based on user location.
         message: message.text,
         context: {
-            name: message.from.first_name || message.from.username,
+            userName: message.from.first_name || message.from.username,
+            lastMessageOn: DateTime.local(),
             jokeCounter: 0,
+            lastJokeOn: DateTime.fromSeconds(0),
         },
     });
 
