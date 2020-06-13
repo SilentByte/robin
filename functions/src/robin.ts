@@ -10,6 +10,7 @@ import { ROBIN_MESSAGES } from "./messages";
 export interface IRobinContext {
     userName?: string;
     lastMessageOn: DateTime;
+    messageCounter: number;
     lastGreetingOn: DateTime;
     jokeCounter: number;
     lastJokeOn: DateTime;
@@ -117,6 +118,7 @@ export class Robin {
             messages.push(JSON.stringify(wit));
         }
 
+        context.messageCounter += 1;
         context.lastMessageOn = session.timestamp;
 
         return {

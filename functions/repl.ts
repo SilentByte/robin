@@ -55,6 +55,7 @@ function formatMessage(message: string) {
     let context: IRobinContext = {
         userName: "Rico",
         lastMessageOn: DateTime.local(),
+        messageCounter: 0,
         lastGreetingOn: DateTime.fromSeconds(0),
         jokeCounter: 0,
         lastJokeOn: DateTime.fromSeconds(0),
