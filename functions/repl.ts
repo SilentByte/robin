@@ -8,7 +8,7 @@ import { DateTime } from "luxon";
 import {
     IRobinContext
     , Robin,
-} from "./robin";
+} from "./src/robin";
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -26,6 +26,14 @@ function prompt(): Promise<string> {
             resolve(input);
         });
     });
+}
+
+function formatMessage(message: string) {
+    try {
+        return JSON.stringify(JSON.parse(message), null, 4);
+    } catch {
+        return message;
+    }
 }
 
 (async () => {
@@ -50,7 +58,7 @@ function prompt(): Promise<string> {
 
         console.log("");
         result.messages.forEach((m, i, a) => {
-            console.log(`[${i + 1}/${a.length}] ${m}`);
+            console.log(`[${i + 1}/${a.length}] ${formatMessage(m)}`);
             console.log("");
         });
     }
