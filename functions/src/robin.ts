@@ -83,8 +83,8 @@ export class Robin {
     async process(session: IRobinSession): Promise<IRobinResult> {
         const response = await this.queryWit(session.message, session.timestamp);
 
-        let context = Object.assign({}, session.context);
-        let ephemeral: IEphemeralContext = {
+        const context = Object.assign({}, session.context);
+        const ephemeral: IEphemeralContext = {
             greetings: false,
             bye: false,
             thanks: false,

@@ -6,7 +6,8 @@
 import * as functions from "firebase-functions";
 import axios from "axios";
 import { DateTime } from "luxon";
-import { Robin, ROBIN_MESSAGES } from "./robin";
+import { Robin } from "./robin";
+import { ROBIN_MESSAGES } from "./messages";
 
 const config = functions.config();
 const robin = new Robin({
@@ -42,11 +43,11 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
     const message = request.body.message;
     if(message.voice) {
         console.warn("Declining voice message");
-        await sendTelegram(message.chat.id, ROBIN_MESSAGES.voiceNotSupported);
+        await sendTelegram(message.chat.id, ROBIN_MESSAGES.voiceNotSupported.any());
         return;
     } else if(!message.text) {
         console.warn("Message type is not supported");
-        await sendTelegram(message.chat.id, ROBIN_MESSAGES.messageTypeNotSupported);
+        await sendTelegram(message.chat.id, ROBIN_MESSAGES.messageTypeNotSupported.any());
         return;
     }
 
