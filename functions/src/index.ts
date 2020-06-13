@@ -57,6 +57,7 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
         context: {
             userName: message.from.first_name || message.from.username,
             lastMessageOn: DateTime.local(),
+            lastGreetingOn: DateTime.fromSeconds(0),
             jokeCounter: 0,
             lastJokeOn: DateTime.fromSeconds(0),
         },

@@ -10,8 +10,16 @@ import { ROBIN_MESSAGES } from "./messages";
 export interface IRobinContext {
     userName?: string;
     lastMessageOn: DateTime;
+    lastGreetingOn: DateTime;
     jokeCounter: number;
     lastJokeOn: DateTime;
+}
+
+interface IEphemeralContext {
+    greetings: boolean;
+    bye: boolean;
+    thanks: boolean;
+    sentiment: "negative" | "neutral" | "positive";
 }
 
 export interface IRobinSession {
@@ -39,7 +47,7 @@ export class Robin {
         this.log = options.log;
     }
 
-    private async sendMessage(message: string, timestamp: DateTime): Promise<any> {
+    private async queryWit(message: string, timestamp: DateTime): Promise<any> {
         const response = await axios.get(this.url, {
             headers: {
                 "Authorization": `Bearer ${this.token}`,
@@ -62,10 +70,29 @@ export class Robin {
         return response.data;
     }
 
+    private static processTraits(response: any, context: IRobinContext, ephemeral: IEphemeralContext) {
+        ephemeral.greetings = !!response.traits.wit$greetings;
+        ephemeral.bye = !!response.traits.wit$bye;
+        ephemeral.thanks = !!response.traits.wit$thanks;
+
+        if(response.traits.wit$sentiment) {
+            ephemeral.sentiment = response.traits.wit$sentiment[0].value;
+        }
+    }
+
     async process(session: IRobinSession): Promise<IRobinResult> {
-        const response = await this.sendMessage(session.message, session.timestamp);
+        const response = await this.queryWit(session.message, session.timestamp);
 
         let context = Object.assign({}, session.context);
+        let ephemeral: IEphemeralContext = {
+            greetings: false,
+            bye: false,
+            thanks: false,
+            sentiment: "neutral",
+        };
+
+        Robin.processTraits(response, context, ephemeral);
+
         const messages = [];
         if(response.traits.wit$greetings) {
             if(context.userName) {

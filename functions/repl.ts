@@ -4,6 +4,8 @@
  */
 
 import * as readline from "readline";
+import * as colors from "colors";
+import * as columnify from "columnify";
 import { DateTime } from "luxon";
 import {
     IRobinContext,
@@ -40,6 +42,7 @@ function formatMessage(message: string) {
     let context: IRobinContext = {
         userName: "Rico",
         lastMessageOn: DateTime.local(),
+        lastGreetingOn: DateTime.fromSeconds(0),
         jokeCounter: 0,
         lastJokeOn: DateTime.fromSeconds(0),
     };
@@ -58,13 +61,35 @@ function formatMessage(message: string) {
             timestamp: DateTime.local(),
         });
 
-        context = result.context;
-
         console.log("");
         result.messages.forEach((m, i, a) => {
             console.log(`${i + 1}) ${formatMessage(m)}`);
             console.log("");
         });
+
+        console.log(
+            columnify(Object.keys(context).map(k => {
+                const previous = (context as any)[k].toString();
+                let next = (result.context as any)[k].toString();
+
+                if(previous !== next) {
+                    k = colors.yellow.bold(k);
+                    next = colors.yellow.bold(next);
+                }
+
+                return {
+                    state: k,
+                    previous,
+                    next,
+                };
+            }), {
+                columnSplitter: "    ",
+                headingTransform: heading => colors.bold(heading.toUpperCase()),
+            }),
+        );
+        console.log("");
+
+        context = result.context;
     }
 
     rl.close();
