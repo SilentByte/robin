@@ -102,12 +102,17 @@ export class Robin {
         Robin.processIntents(wit, ephemeral);
 
         const messages = [];
-        if(ephemeral.greetings) {
+
+        if(ephemeral.greetings || context.messageCounter === 0) {
             if(context.userName) {
                 messages.push(ROBIN_MESSAGES.personalGreeting.any({name: context.userName}));
             } else {
                 messages.push(ROBIN_MESSAGES.genericGreeting.any());
             }
+        }
+
+        if(context.messageCounter === 0) {
+            messages.push(ROBIN_MESSAGES.welcome.any());
         }
 
         if(ephemeral.intents.includes("tell_joke")) {

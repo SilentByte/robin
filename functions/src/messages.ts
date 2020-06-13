@@ -22,6 +22,11 @@ const RAW_MESSAGES = yaml.parse(`
   genericGreeting:
     - Hi there! 😃
 
+  welcome:
+    - I'm Robin ♀️, your friendly accountant! I'll be assisting you in keeping to your personal or business budget,
+      track your expenses, and try to answer any questions you may have! 😃 Also, people say I'm quite funny --
+      let me know if you want to hear a joke. 😉 
+
   think:
     - Alright 🤔, let's see...
     - Hmm...
