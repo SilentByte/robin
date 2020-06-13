@@ -14,16 +14,23 @@ const robin = new Robin({
 });
 
 async function sendTelegram(chatId: string, message: string): Promise<string> {
-    return await axios.post(`https://api.telegram.org/bot${config.telegram.access_token}/sendMessage`, {
-        chat_id: chatId,
-        text: message,
-    });
+    try {
+        return await axios.post(`https://api.telegram.org/bot${config.telegram.access_token}/sendMessage`, {
+            chat_id: chatId,
+            text: message,
+            parse_mode: "HTML",
+        });
+    } catch(e) {
+        console.log(e);
+        throw e;
+    }
 }
 
 export const robinTelegram = functions.https.onRequest(async (request, response) => {
+    response.end();
+
     if(request.query.token !== config.telegram.authenticity_token) {
         console.error("Caller provided invalid Telegram authenticity token");
-        response.status(403).end();
         return;
     }
 
@@ -34,12 +41,10 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
     if(message.voice) {
         console.warn("Declining voice message");
         await sendTelegram(message.chat.id, ROBIN_MESSAGES.voiceNotSupported);
-        response.end();
         return;
     } else if(!message.text) {
         console.warn("Message type is not supported");
         await sendTelegram(message.chat.id, ROBIN_MESSAGES.messageTypeNotSupported);
-        response.end();
         return;
     }
 
@@ -57,6 +62,4 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
     for(const m of result.messages) {
         await sendTelegram(message.chat.id, m);
     }
-
-    response.end();
 });

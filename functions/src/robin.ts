@@ -44,9 +44,9 @@ export const ROBIN_MESSAGES = {
     ],
     outOfJokes: "I think that's enough for now. I'm an accountant, not a comedian. 😉",
     jokes: [
-        squash(`I can't imagine living without an accountant... It must be *accrual* life. 🌎😂`),
-        squash(`I almost fell down the stairs the other day... I lost *my balance*. ☺️`),
-        squash(`Aww! 🤗 Thanks for your kind gift, I really *depreciate* it!`),
+        squash(`I can't imagine living without an accountant... It must be <b>accrual</b> life. 🌎😂`),
+        squash(`I almost fell down the stairs the other day... I lost <b>my balance</b>. ☺️`),
+        squash(`Aww! 🤗 Thanks for your kind gift, I really <b>depreciate</b> it!`),
     ],
 };
 
@@ -84,7 +84,7 @@ export class Robin {
 
         const messages = [];
         if(response.traits.wit$greetings) {
-            messages.push(ROBIN_MESSAGES.greetings[Math.floor(Math.random() * ROBIN_MESSAGES.greetings.length) - 1]
+            messages.push(ROBIN_MESSAGES.greetings[Math.floor(Math.random() * ROBIN_MESSAGES.greetings.length)]
                 .replace("%NAME", session.context.name || "friend"));
         }
 
