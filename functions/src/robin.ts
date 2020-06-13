@@ -111,7 +111,7 @@ export class Robin {
             }
         }
 
-        if(context.messageCounter === 0) {
+        if(context.messageCounter === 0 || session.message === "/start") {
             messages.push(ROBIN_MESSAGES.welcome.any());
         }
 
@@ -119,8 +119,6 @@ export class Robin {
             messages.push(ROBIN_MESSAGES.joke.get(context.jokeCounter, ROBIN_MESSAGES.doneJoking.any()));
             context.jokeCounter = Math.min(context.jokeCounter + 1, ROBIN_MESSAGES.joke.length);
             context.lastJokeOn = DateTime.local();
-        } else {
-            messages.push(JSON.stringify(wit));
         }
 
         context.messageCounter += 1;
