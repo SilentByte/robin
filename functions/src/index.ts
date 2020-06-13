@@ -44,19 +44,19 @@ function defaultContext(): IRobinContext {
     };
 }
 
-async function fetchContext(by: "telegramId", id: string): Promise<IRobinContext> {
-    const snap = await db
+async function fetchContext(id: string): Promise<IRobinContext> {
+    console.log(`Fetching context for ${id}`);
+    const doc = await db
         .collection("users")
-        .where(by, "==", id)
-        .limit(1)
+        .doc(id)
         .get();
 
-    if(snap.docs.length === 0) {
-        console.log(`Setting up new context for ${by}:${id}`);
+    const data = doc.data();
+    if(!data) {
+        console.log(`Setting up new context for ${id}`);
         return defaultContext();
     }
 
-    const data = snap.docs[0].data();
     const fromISO = (iso: string) => data.lastMessageOn ? DateTime.fromISO(iso) : DateTime.fromSeconds(0);
     return {
         userName: data.userName,
@@ -66,6 +66,19 @@ async function fetchContext(by: "telegramId", id: string): Promise<IRobinContext
         jokeCounter: data.jokeCounter || 0,
         lastJokeOn: fromISO(data.lastJokeOn),
     };
+}
+
+async function updateContext(id: string, context: IRobinContext) {
+    console.log(`Updating context for ${id}`);
+
+    const serializedContext: any = Object.assign({}, context);
+    Object.entries(context).forEach(([k, v]) => {
+        if(v instanceof DateTime) {
+            serializedContext[k] = v.toISO();
+        }
+    });
+
+    await db.collection("users").doc(id).set(serializedContext);
 }
 
 async function handleTelegram(request: functions.Request) {
@@ -88,25 +101,34 @@ async function handleTelegram(request: functions.Request) {
         return;
     }
 
+    const docId = `telegram:${message.from.id}`;
     const result = await robin.process({
         timestamp: DateTime.fromSeconds(message.date), // TODO: Adjust timezone based on user location.
         message: message.text,
         context: {
-            ...await fetchContext("telegramId", message.from.id.toString()),
+            ...await fetchContext(docId),
             userName: message.from.first_name || message.from.username,
         },
     });
 
-    console.log("Sending Telegram response...");
-    for(const m of result.messages) {
-        await sendTelegram(message.chat.id, m);
-    }
+    await Promise.all([
+        updateContext(docId, result.context),
+        (async () => {
+            console.log("Sending Telegram response...");
+            for(const m of result.messages) {
+                await sendTelegram(message.chat.id, m);
+            }
+        })(),
+    ]);
 }
 
 // noinspection JSUnusedGlobalSymbols
 export const robinTelegram = functions.https.onRequest(async (request, response) => {
     try {
         await handleTelegram(request);
+    } catch(e) {
+        console.error("Unhandled exception");
+        console.error(e);
     } finally {
         response.end();
     }
