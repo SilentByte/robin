@@ -17,8 +17,8 @@
         "axios": "^0.19.2",
         "colors": "^1.4.0",
         "columnify": "^1.5.4",
-        "firebase-admin": "^8.10.0",
-        "firebase-functions": "^3.6.1",
+        "firebase-admin": "^8.12.1",
+        "firebase-functions": "^3.7.0",
         "luxon": "^1.24.1",
         "yaml": "^1.10.0"
     },
@@ -26,9 +26,9 @@
         "@types/colors": "^1.2.1",
         "@types/columnify": "^1.5.0",
         "@types/luxon": "^1.24.0",
-        "firebase-functions-test": "^0.2.0",
-        "tslint": "^5.12.0",
-        "typescript": "^3.8.0"
+        "firebase-functions-test": "^0.2.1",
+        "tslint": "^6.1.2",
+        "typescript": "^3.9.5"
     },
     "private": true
 }
