@@ -7,6 +7,7 @@ import * as fs from "fs";
 import * as readline from "readline";
 import * as colors from "colors";
 import * as columnify from "columnify";
+import * as yaml from "yaml";
 import { DateTime } from "luxon";
 import {
     IRobinContext,
@@ -61,12 +62,17 @@ function formatMessage(message: string) {
         lastJokeOn: DateTime.fromSeconds(0),
     };
 
-    while(true) {
+    let lastWit = null;
+    repl: while(true) {
         const message = (await prompt()).trim();
-        if(!message) {
-            continue;
-        } else if(message === "exit") {
-            break;
+        switch(message) {
+            case "":
+                continue;
+            case "exit":
+                break repl;
+            case "wit":
+                console.log(yaml.stringify(lastWit));
+                continue;
         }
 
         const result = await robin.process({
@@ -74,6 +80,8 @@ function formatMessage(message: string) {
             message,
             timestamp: DateTime.local(),
         });
+
+        lastWit = result.wit;
 
         console.log("");
         result.messages.forEach((m, i) => {

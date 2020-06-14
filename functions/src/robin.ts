@@ -33,6 +33,7 @@ export interface IRobinSession {
 export interface IRobinResult {
     context: IRobinContext;
     messages: string[];
+    wit: any;
 }
 
 export class Robin {
@@ -127,6 +128,7 @@ export class Robin {
         return {
             context,
             messages,
+            wit,
         };
     }
 }
