@@ -64,8 +64,8 @@ function formatMessage(message: string) {
 
     let lastWit = null;
     repl: while(true) {
-        const message = (await prompt()).trim();
-        switch(message) {
+        const text = (await prompt()).trim();
+        switch(text) {
             case "":
                 continue;
             case "exit":
@@ -77,7 +77,7 @@ function formatMessage(message: string) {
 
         const result = await robin.process({
             context,
-            message,
+            text,
             timestamp: DateTime.local(),
         });
 

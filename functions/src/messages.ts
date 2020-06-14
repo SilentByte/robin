@@ -8,10 +8,6 @@ import * as yaml from "yaml";
 // language=yaml
 const RAW_MESSAGES = yaml.parse(`
 
-  voiceNotSupported:
-    - I'm sorry, I can't understand voice messages at the moment. 😔
-      My team and I are working on it! 🔨 😃
-
   messageTypeNotSupported:
     - Oh no, looks like I haven't received training for this message format yet. 😔
 

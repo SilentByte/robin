@@ -8,8 +8,12 @@ import * as admin from "firebase-admin";
 
 import axios from "axios";
 import { DateTime } from "luxon";
+
+import { convertAudioToMp3 } from "./convert";
 import { IRobinContext, Robin } from "./robin";
 import { ROBIN_MESSAGES } from "./messages";
+
+const TELEGRAM_API_URL = "https://api.telegram.org";
 
 admin.initializeApp();
 
@@ -22,11 +26,30 @@ const robin = new Robin({
 
 async function sendTelegram(chatId: string, message: string): Promise<void> {
     try {
-        await axios.post(`https://api.telegram.org/bot${config.telegram.access_token}/sendMessage`, {
+        await axios.post(`${TELEGRAM_API_URL}/bot${config.telegram.access_token}/sendMessage`, {
             chat_id: chatId,
             text: message,
             parse_mode: "HTML",
         });
+    } catch(e) {
+        console.error(e);
+        throw e;
+    }
+}
+
+async function fetchTelegramFile(fileId: string): Promise<ArrayBuffer> {
+    try {
+        const file = (await axios.get(`${TELEGRAM_API_URL}/bot${config.telegram.access_token}/getFile`, {
+            params: {
+                file_id: fileId,
+            },
+        })).data;
+
+        return (
+            await axios.get(`${TELEGRAM_API_URL}/file/bot${config.telegram.access_token}/${file.result.file_path}`, {
+                responseType: "arraybuffer",
+            })
+        ).data;
     } catch(e) {
         console.error(e);
         throw e;
@@ -91,11 +114,7 @@ async function handleTelegram(request: functions.Request) {
     console.log(request.body);
 
     const message = request.body.message;
-    if(message.voice) {
-        console.warn("Declining voice message");
-        await sendTelegram(message.chat.id, ROBIN_MESSAGES.voiceNotSupported.any());
-        return;
-    } else if(!message.text) {
+    if(!message.text && !message.voice) {
         console.warn("Message type is not supported");
         await sendTelegram(message.chat.id, ROBIN_MESSAGES.messageTypeNotSupported.any());
         return;
@@ -105,6 +124,7 @@ async function handleTelegram(request: functions.Request) {
     const result = await robin.process({
         timestamp: DateTime.fromSeconds(message.date), // TODO: Adjust timezone based on user location.
         text: message.text,
+        voice: message.voice && await convertAudioToMp3(await fetchTelegramFile(message.voice.file_id)),
         context: {
             ...await fetchContext(docId),
             userName: message.from.first_name || message.from.username,

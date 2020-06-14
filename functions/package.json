@@ -19,13 +19,17 @@
         "columnify": "^1.5.4",
         "firebase-admin": "^8.12.1",
         "firebase-functions": "^3.7.0",
+        "fluent-ffmpeg": "^2.1.2",
         "luxon": "^1.24.1",
+        "uuid": "^8.1.0",
         "yaml": "^1.10.0"
     },
     "devDependencies": {
         "@types/colors": "^1.2.1",
         "@types/columnify": "^1.5.0",
+        "@types/fluent-ffmpeg": "^2.1.14",
         "@types/luxon": "^1.24.0",
+        "@types/uuid": "^8.0.0",
         "firebase-functions-test": "^0.2.1",
         "tslint": "^6.1.2",
         "typescript": "^3.9.5"
