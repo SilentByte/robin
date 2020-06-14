@@ -38,6 +38,7 @@ export async function convertAudioToMp3(data: ArrayBuffer): Promise<ArrayBuffer>
     const tmpOutputFileName = path.join(os.tmpdir(), uuid4());
 
     try {
+        console.log(`Starting audio conversion for ${tmpInputFileName}...`);
         await writeData(tmpInputFileName, data);
         await new Promise((resolve, reject) => {
             ffmpeg(tmpInputFileName)
@@ -47,6 +48,8 @@ export async function convertAudioToMp3(data: ArrayBuffer): Promise<ArrayBuffer>
                 .on("end", () => resolve())
                 .save(tmpOutputFileName);
         });
+
+        console.log(`Audio conversion for ${tmpInputFileName} completed`);
         return await readData(tmpOutputFileName);
     } finally {
         fs.unlink(tmpInputFileName, () => null);
