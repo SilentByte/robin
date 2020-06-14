@@ -8,6 +8,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as ffmpeg from "fluent-ffmpeg";
 import { v4 as uuid4 } from "uuid";
+import log from "./log";
 
 function writeData(filename: string, data: ArrayBuffer): Promise<void> {
     return new Promise(function(resolve, reject) {
@@ -38,7 +39,7 @@ export async function convertAudioToMp3(data: ArrayBuffer): Promise<ArrayBuffer>
     const tmpOutputFileName = path.join(os.tmpdir(), uuid4());
 
     try {
-        console.log(`Starting audio conversion for ${tmpInputFileName}...`);
+        log.info(`Starting audio conversion for ${tmpInputFileName}...`);
         await writeData(tmpInputFileName, data);
         await new Promise((resolve, reject) => {
             ffmpeg(tmpInputFileName)
@@ -49,7 +50,7 @@ export async function convertAudioToMp3(data: ArrayBuffer): Promise<ArrayBuffer>
                 .save(tmpOutputFileName);
         });
 
-        console.log(`Audio conversion for ${tmpInputFileName} completed`);
+        log.info(`Audio conversion for ${tmpInputFileName} completed`);
         return await readData(tmpOutputFileName);
     } finally {
         fs.unlink(tmpInputFileName, () => null);

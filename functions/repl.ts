@@ -33,7 +33,6 @@ if(fs.existsSync(HISTORY_FILE_NAME)) {
 
 const robin = new Robin({
     token: process.env.WIT_ACCESS_TOKEN || "",
-    log: false,
 });
 
 function prompt(): Promise<string> {

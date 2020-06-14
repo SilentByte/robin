@@ -5,6 +5,8 @@
 
 import axios from "axios";
 import { DateTime } from "luxon";
+
+import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
 
 export interface IRobinContext {
@@ -41,14 +43,11 @@ export class Robin {
     private readonly url = "https://api.wit.ai";
     private readonly version = "20200612";
     private readonly token: string;
-    private readonly log: boolean;
 
     constructor(options: {
         token: string;
-        log: boolean;
     }) {
         this.token = options.token;
-        this.log = options.log;
     }
 
     private async queryWitText(message: string, timestamp: DateTime): Promise<any> {
@@ -67,10 +66,7 @@ export class Robin {
             },
         });
 
-        if(this.log) {
-            console.log(response.data);
-        }
-
+        log.debug(response.data);
         return response.data;
     }
 
@@ -90,10 +86,7 @@ export class Robin {
             },
         });
 
-        if(this.log) {
-            console.log(response.data);
-        }
-
+        log.debug(response.data);
         return response.data;
     }
 

@@ -9,6 +9,7 @@ import * as admin from "firebase-admin";
 import axios from "axios";
 import { DateTime } from "luxon";
 
+import log from "./log";
 import { convertAudioToMp3 } from "./convert";
 import { IRobinContext, Robin } from "./robin";
 import { ROBIN_MESSAGES } from "./messages";
@@ -21,7 +22,6 @@ const db = admin.firestore();
 const config = functions.config();
 const robin = new Robin({
     token: config.wit.access_token,
-    log: true,
 });
 
 async function sendTelegram(chatId: string, message: string): Promise<void> {
@@ -32,7 +32,7 @@ async function sendTelegram(chatId: string, message: string): Promise<void> {
             parse_mode: "HTML",
         });
     } catch(e) {
-        console.error(e);
+        log.error(e);
         throw e;
     }
 }
@@ -51,7 +51,7 @@ async function fetchTelegramFile(fileId: string): Promise<ArrayBuffer> {
             })
         ).data;
     } catch(e) {
-        console.error(e);
+        log.error(e);
         throw e;
     }
 }
@@ -68,7 +68,7 @@ function defaultContext(): IRobinContext {
 }
 
 async function fetchContext(id: string): Promise<IRobinContext> {
-    console.log(`Fetching context for ${id}`);
+    log.info(`Fetching context for ${id}`);
     const doc = await db
         .collection("users")
         .doc(id)
@@ -76,7 +76,7 @@ async function fetchContext(id: string): Promise<IRobinContext> {
 
     const data = doc.data();
     if(!data) {
-        console.log(`Setting up new context for ${id}`);
+        log.info(`Setting up new context for ${id}`);
         return defaultContext();
     }
 
@@ -92,7 +92,7 @@ async function fetchContext(id: string): Promise<IRobinContext> {
 }
 
 async function updateContext(id: string, context: IRobinContext) {
-    console.log(`Updating context for ${id}`);
+    log.info(`Updating context for ${id}`);
 
     const serializedContext: any = Object.assign({}, context);
     Object.entries(context).forEach(([k, v]) => {
@@ -106,16 +106,16 @@ async function updateContext(id: string, context: IRobinContext) {
 
 async function handleTelegram(request: functions.Request) {
     if(request.query.token !== config.telegram.authenticity_token) {
-        console.error("Caller provided invalid Telegram authenticity token");
+        log.error("Caller provided invalid Telegram authenticity token");
         return;
     }
 
-    console.log("Received Telegram message:");
-    console.log(request.body);
+    log.info("Received Telegram message:");
+    log.info(request.body);
 
     const message = request.body.message;
     if(!message.text && !message.voice) {
-        console.warn("Message type is not supported");
+        log.warn("Message type is not supported");
         await sendTelegram(message.chat.id, ROBIN_MESSAGES.messageTypeNotSupported.any());
         return;
     }
@@ -134,7 +134,7 @@ async function handleTelegram(request: functions.Request) {
     await Promise.all([
         updateContext(docId, result.context),
         (async () => {
-            console.log("Sending Telegram response...");
+            log.info("Sending Telegram response...");
             for(const m of result.messages) {
                 await sendTelegram(message.chat.id, m);
             }
@@ -147,8 +147,8 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
     try {
         await handleTelegram(request);
     } catch(e) {
-        console.error("Unhandled exception");
-        console.error(e);
+        log.error("Unhandled exception");
+        log.error(e);
     } finally {
         response.end();
     }

@@ -17,6 +17,7 @@
         "axios": "^0.19.2",
         "colors": "^1.4.0",
         "columnify": "^1.5.4",
+        "console-log-level": "^1.4.1",
         "firebase-admin": "^8.12.1",
         "firebase-functions": "^3.7.0",
         "fluent-ffmpeg": "^2.1.2",
@@ -27,6 +28,7 @@
     "devDependencies": {
         "@types/colors": "^1.2.1",
         "@types/columnify": "^1.5.0",
+        "@types/console-log-level": "^1.4.0",
         "@types/fluent-ffmpeg": "^2.1.14",
         "@types/luxon": "^1.24.0",
         "@types/uuid": "^8.0.0",
