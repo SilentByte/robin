@@ -20,9 +20,9 @@ const robin = new Robin({
     log: true,
 });
 
-async function sendTelegram(chatId: string, message: string): Promise<string> {
+async function sendTelegram(chatId: string, message: string): Promise<void> {
     try {
-        return await axios.post(`https://api.telegram.org/bot${config.telegram.access_token}/sendMessage`, {
+        await axios.post(`https://api.telegram.org/bot${config.telegram.access_token}/sendMessage`, {
             chat_id: chatId,
             text: message,
             parse_mode: "HTML",
@@ -104,7 +104,7 @@ async function handleTelegram(request: functions.Request) {
     const docId = `telegram:${message.from.id}`;
     const result = await robin.process({
         timestamp: DateTime.fromSeconds(message.date), // TODO: Adjust timezone based on user location.
-        message: message.text,
+        text: message.text,
         context: {
             ...await fetchContext(docId),
             userName: message.from.first_name || message.from.username,

@@ -25,7 +25,8 @@ interface IEphemeralContext {
 }
 
 export interface IRobinSession {
-    message: string;
+    text?: string;
+    voice?: ArrayBuffer;
     timestamp: DateTime;
     context: IRobinContext;
 }
@@ -37,7 +38,7 @@ export interface IRobinResult {
 }
 
 export class Robin {
-    private readonly url = "https://api.wit.ai/message";
+    private readonly url = "https://api.wit.ai";
     private readonly version = "20200612";
     private readonly token: string;
     private readonly log: boolean;
@@ -50,8 +51,8 @@ export class Robin {
         this.log = options.log;
     }
 
-    private async queryWit(message: string, timestamp: DateTime): Promise<any> {
-        const response = await axios.get(this.url, {
+    private async queryWitText(message: string, timestamp: DateTime): Promise<any> {
+        const response = await axios.get(`${this.url}/message`, {
             headers: {
                 "Authorization": `Bearer ${this.token}`,
                 "Content-Type": "application/json",
@@ -73,6 +74,39 @@ export class Robin {
         return response.data;
     }
 
+    // TODO: Currently forcing voice to be in audio/mpeg format due to Wit's broken OGG support.
+    private async queryWitVoice(voice: ArrayBuffer, timestamp: DateTime): Promise<any> {
+        const response = await axios.post(`${this.url}/speech`, voice, {
+            headers: {
+                "Authorization": `Bearer ${this.token}`,
+                "Content-Type": "audio/mpeg",
+                "Accept": "application/json",
+            },
+            params: {
+                v: this.version,
+                context: JSON.stringify({
+                    reference_time: timestamp.toISO(),
+                }),
+            },
+        });
+
+        if(this.log) {
+            console.log(response.data);
+        }
+
+        return response.data;
+    }
+
+    private async queryWit(session: IRobinSession): Promise<any> {
+        if(session.text) {
+            return await this.queryWitText(session.text, session.timestamp);
+        } else if(session.voice) {
+            return await this.queryWitVoice(session.voice, session.timestamp);
+        } else {
+            throw new Error("Either text or voice must be given");
+        }
+    }
+
     private static processTraits(wit: any, ephemeral: IEphemeralContext) {
         ephemeral.greetings = !!wit.traits.wit$greetings;
         ephemeral.bye = !!wit.traits.wit$bye;
@@ -88,8 +122,6 @@ export class Robin {
     }
 
     async process(session: IRobinSession): Promise<IRobinResult> {
-        const wit = await this.queryWit(session.message, session.timestamp);
-
         const context = Object.assign({}, session.context);
         const ephemeral: IEphemeralContext = {
             greetings: false,
@@ -98,6 +130,11 @@ export class Robin {
             sentiment: "neutral",
             intents: [],
         };
+
+        const wit = await this.queryWit(session);
+        wit.intents = wit.intents || [];
+        wit.entities = wit.entities || {};
+        wit.traits = wit.traits || {};
 
         Robin.processTraits(wit, ephemeral);
         Robin.processIntents(wit, ephemeral);
@@ -112,7 +149,7 @@ export class Robin {
             }
         }
 
-        if(context.messageCounter === 0 || session.message === "/start") {
+        if(context.messageCounter === 0 || session.text === "/start") {
             messages.push(ROBIN_MESSAGES.welcome.any());
         }
 
