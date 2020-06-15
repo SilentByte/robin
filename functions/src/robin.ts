@@ -85,7 +85,7 @@ class RobinLogic {
 
     private processIntents() {
         const intent = ({
-            "tell_joke": this.processTellJokeIntent,
+            "tell_joke": () => this.processTellJokeIntent(),
         } as any)[this.ephemeral.intents[0]];
 
         if(intent) {
