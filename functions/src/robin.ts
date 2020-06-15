@@ -9,7 +9,10 @@ import { DateTime } from "luxon";
 import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
 
+export type RobinState = "default";
+
 export interface IRobinContext {
+    state: RobinState;
     userName: string;
     lastMessageOn: DateTime;
     messageCounter: number;
@@ -37,6 +40,84 @@ export interface IRobinResult {
     context: IRobinContext;
     messages: string[];
     wit: any;
+}
+
+class RobinLogic {
+    private messages: string[] = [];
+
+    private constructor(
+        private wit: any,
+        private ephemeral: IEphemeralContext,
+        private context: IRobinContext,
+        private session: IRobinSession,
+    ) {
+        this.processGreetings();
+        this.processFirstInteraction();
+        this.processIntents();
+        this.processBye();
+        this.processConfused();
+
+        this.context.messageCounter += 1;
+        this.context.lastMessageOn = session.timestamp;
+    }
+
+    private processGreetings() {
+        if(this.ephemeral.greetings || this.context.messageCounter === 0) {
+            if(this.context.userName) {
+                this.messages.push(ROBIN_MESSAGES.personalGreeting.any({name: this.context.userName}));
+            } else {
+                this.messages.push(ROBIN_MESSAGES.genericGreeting.any());
+            }
+        }
+    }
+
+    private processFirstInteraction() {
+        if(this.context.messageCounter === 0 || this.session.text === "/start") {
+            this.messages.push(ROBIN_MESSAGES.welcome.any());
+        }
+    }
+
+    private processTellJokeIntent() {
+        this.messages.push(ROBIN_MESSAGES.joke.get(this.context.jokeCounter, ROBIN_MESSAGES.doneJoking.any()));
+        this.context.jokeCounter = Math.min(this.context.jokeCounter + 1, ROBIN_MESSAGES.joke.length);
+        this.context.lastJokeOn = DateTime.local();
+    }
+
+    private processIntents() {
+        const intent = ({
+            "tell_joke": this.processTellJokeIntent,
+        } as any)[this.ephemeral.intents[0]];
+
+        if(intent) {
+            intent();
+        }
+    }
+
+    private processBye() {
+        if(this.messages.length === 0 && this.ephemeral.bye) {
+            this.messages.push(ROBIN_MESSAGES.bye.any({name: this.context.userName}));
+        }
+    }
+
+    private processConfused() {
+        if(this.messages.length === 0) {
+            this.messages.push(ROBIN_MESSAGES.confused.any());
+        }
+    }
+
+    static process(
+        wit: any,
+        ephemeral: IEphemeralContext,
+        context: IRobinContext,
+        session: IRobinSession,
+    ): IRobinResult {
+        const logic = new RobinLogic(wit, ephemeral, context, session);
+        return {
+            context: logic.context,
+            messages: logic.messages,
+            wit: logic.wit,
+        };
+    }
 }
 
 export class Robin {
@@ -101,9 +182,18 @@ export class Robin {
     }
 
     private static processTraits(wit: any, ephemeral: IEphemeralContext) {
+        ephemeral.thanks = !!wit.traits.wit$thanks;
+
         ephemeral.greetings = !!wit.traits.wit$greetings;
         ephemeral.bye = !!wit.traits.wit$bye;
-        ephemeral.thanks = !!wit.traits.wit$thanks;
+
+        if(ephemeral.greetings && ephemeral.bye) {
+            if(wit.traits.wit$greetings.confidence > wit.traits.wit$bye.confidence) {
+                ephemeral.bye = false;
+            } else {
+                ephemeral.greetings = false;
+            }
+        }
 
         if(wit.traits.wit$sentiment) {
             ephemeral.sentiment = wit.traits.wit$sentiment[0].value;
@@ -131,34 +221,6 @@ export class Robin {
 
         Robin.processTraits(wit, ephemeral);
         Robin.processIntents(wit, ephemeral);
-
-        const messages = [];
-
-        if(ephemeral.greetings || context.messageCounter === 0) {
-            if(context.userName) {
-                messages.push(ROBIN_MESSAGES.personalGreeting.any({name: context.userName}));
-            } else {
-                messages.push(ROBIN_MESSAGES.genericGreeting.any());
-            }
-        }
-
-        if(context.messageCounter === 0 || session.text === "/start") {
-            messages.push(ROBIN_MESSAGES.welcome.any());
-        }
-
-        if(ephemeral.intents.includes("tell_joke")) {
-            messages.push(ROBIN_MESSAGES.joke.get(context.jokeCounter, ROBIN_MESSAGES.doneJoking.any()));
-            context.jokeCounter = Math.min(context.jokeCounter + 1, ROBIN_MESSAGES.joke.length);
-            context.lastJokeOn = DateTime.local();
-        }
-
-        context.messageCounter += 1;
-        context.lastMessageOn = session.timestamp;
-
-        return {
-            context,
-            messages,
-            wit,
-        };
+        return RobinLogic.process(wit, ephemeral, context, session);
     }
 }

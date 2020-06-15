@@ -53,6 +53,7 @@ function formatMessage(message: string) {
 
 (async () => {
     let context: IRobinContext = {
+        state: 'default',
         userName: "Rico",
         lastMessageOn: DateTime.local(),
         messageCounter: 0,

@@ -10,6 +10,9 @@ const RAW_MESSAGES = yaml.parse(`
 
   messageTypeNotSupported:
     - Oh no, looks like I haven't received training for this message format yet. 😔
+  
+  confused:
+    - Hmm... 🤔 I'm sorry, I didn't quite get that...
 
   personalGreeting:
     - Hey {{ name }}, how's it going?
@@ -17,6 +20,11 @@ const RAW_MESSAGES = yaml.parse(`
 
   genericGreeting:
     - Hi there! 😃
+  
+  bye:
+    - See you soon, {{ name }}! 👋😃
+    - Bye! 👋😃
+    - Until next time, cheers! 👋😃
 
   welcome:
     - I'm Robin ♀️, your friendly accountant! I'll be assisting you in keeping to your personal or business budget,

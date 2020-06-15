@@ -58,6 +58,7 @@ async function fetchTelegramFile(fileId: string): Promise<ArrayBuffer> {
 
 function defaultContext(): IRobinContext {
     return {
+        state: "default",
         userName: "anonymous",
         lastMessageOn: DateTime.local(),
         messageCounter: 0,
@@ -82,6 +83,7 @@ async function fetchContext(id: string): Promise<IRobinContext> {
 
     const fromISO = (iso: string) => data.lastMessageOn ? DateTime.fromISO(iso) : DateTime.fromSeconds(0);
     return {
+        state: "default",
         userName: data.userName,
         lastMessageOn: fromISO(data.lastMessageOn),
         messageCounter: data.messageCounter || 0,
@@ -126,6 +128,7 @@ async function handleTelegram(request: functions.Request) {
         text: message.text,
         voice: message.voice && await convertAudioToMp3(await fetchTelegramFile(message.voice.file_id)),
         context: {
+            ...defaultContext(),
             ...await fetchContext(docId),
             userName: message.from.first_name || message.from.username,
         },
