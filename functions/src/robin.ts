@@ -55,7 +55,7 @@ export function defaultContext(): IRobinContext {
 class RobinLogic {
     private messages: string[] = [];
 
-    private readonly states: { [name: string]: Array<[string, () => string]> } = {
+    readonly states: { [name: string]: Array<[string, () => string]> } = {
         "init": [
             ["first_interaction", () => {
                 this.sayHi();
@@ -147,6 +147,8 @@ class RobinLogic {
     }
 
     transition(): IRobinResult {
+        this.messages = [];
+
         log.info(`SM starts with ${this.context.state}`);
         this.context.state = this.execute(this.context.state);
         log.info(`SM ends with ${this.context.state}`);
