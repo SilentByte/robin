@@ -9,10 +9,8 @@ import { DateTime } from "luxon";
 import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
 
-export type RobinState = "default";
-
 export interface IRobinContext {
-    state: RobinState;
+    state: string;
     userName: string;
     lastMessageOn: DateTime;
     messageCounter: number;
@@ -40,6 +38,18 @@ export interface IRobinResult {
     context: IRobinContext;
     messages: string[];
     wit: any;
+}
+
+export function defaultContext(): IRobinContext {
+    return {
+        state: "init",
+        userName: "anonymous",
+        lastMessageOn: DateTime.local(),
+        messageCounter: 0,
+        lastGreetingOn: DateTime.fromSeconds(0),
+        jokeCounter: 0,
+        lastJokeOn: DateTime.fromSeconds(0),
+    };
 }
 
 class RobinLogic {

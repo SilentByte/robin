@@ -10,8 +10,8 @@ import * as columnify from "columnify";
 import * as yaml from "yaml";
 import { DateTime } from "luxon";
 import {
-    IRobinContext,
     Robin,
+    defaultContext,
 } from "./src/robin";
 
 const HISTORY_FILE_NAME = ".robin.history.json";
@@ -52,17 +52,9 @@ function formatMessage(message: string) {
 }
 
 (async () => {
-    let context: IRobinContext = {
-        state: 'default',
-        userName: "Rico",
-        lastMessageOn: DateTime.local(),
-        messageCounter: 0,
-        lastGreetingOn: DateTime.fromSeconds(0),
-        jokeCounter: 0,
-        lastJokeOn: DateTime.fromSeconds(0),
-    };
-
+    let context = defaultContext();
     let lastWit = null;
+
     repl: while(true) {
         const text = (await prompt()).trim();
         switch(text) {
@@ -94,13 +86,14 @@ function formatMessage(message: string) {
                 const previous = (context as any)[k].toString();
                 let next = (result.context as any)[k].toString();
 
+                let state = k;
                 if(previous !== next) {
-                    k = colors.yellow.bold(k);
+                    state = colors.yellow.bold(k);
                     next = colors.yellow.bold(next);
                 }
 
                 return {
-                    state: k,
+                    state,
                     previous,
                     next,
                 };
