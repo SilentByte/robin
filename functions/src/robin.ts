@@ -24,7 +24,7 @@ interface IEphemeralContext {
     bye: boolean;
     thanks: boolean;
     sentiment: "negative" | "neutral" | "positive";
-    intents: string[];
+    intent: string;
 }
 
 export interface IRobinSession {
@@ -55,77 +55,109 @@ export function defaultContext(): IRobinContext {
 class RobinLogic {
     private messages: string[] = [];
 
-    private constructor(
+    private readonly states: { [name: string]: Array<[string, () => string]> } = {
+        "init": [
+            ["first_interaction", () => {
+                this.sayHi();
+                this.sayWelcome();
+                return "main!";
+            }],
+        ],
+        "main": [
+            ["tell_joke_intent", () => {
+                if(this.ephemeral.intent !== "tell_joke") {
+                    return "";
+                }
+
+                this.sayJoke();
+                return "main";
+            }],
+            ["who_are_you", () => {
+                if(this.ephemeral.intent !== "who_are_you") {
+                    return "";
+                }
+
+                this.say(ROBIN_MESSAGES.introduction.any());
+                return "main";
+            }],
+            ["bye", () => {
+                if(this.messages.length === 0 && this.ephemeral.bye) {
+                    this.say(ROBIN_MESSAGES.bye.any({name: this.context.userName}));
+                    return "main";
+                }
+
+                return "";
+            }],
+            ["confused", () => {
+                if(this.messages.length === 0) {
+                    this.say(ROBIN_MESSAGES.confused.any());
+                }
+
+                return "main";
+            }],
+        ],
+    };
+
+    constructor(
         private wit: any,
         private ephemeral: IEphemeralContext,
         private context: IRobinContext,
         private session: IRobinSession,
     ) {
-        this.processGreetings();
-        this.processFirstInteraction();
-        this.processIntents();
-        this.processBye();
-        this.processConfused();
-
-        this.context.messageCounter += 1;
-        this.context.lastMessageOn = session.timestamp;
+        //
     }
 
-    private processGreetings() {
-        if(this.ephemeral.greetings || this.context.messageCounter === 0) {
-            if(this.context.userName) {
-                this.messages.push(ROBIN_MESSAGES.personalGreeting.any({name: this.context.userName}));
-            } else {
-                this.messages.push(ROBIN_MESSAGES.genericGreeting.any());
-            }
+    private say(message: string) {
+        this.messages.push(message);
+    }
+
+    private sayHi() {
+        if(this.context.userName) {
+            this.say(ROBIN_MESSAGES.personalGreeting.any({name: this.context.userName}));
+        } else {
+            this.say(ROBIN_MESSAGES.genericGreeting.any());
         }
     }
 
-    private processFirstInteraction() {
-        if(this.context.messageCounter === 0 || this.session.text === "/start") {
-            this.messages.push(ROBIN_MESSAGES.welcome.any());
-        }
+    private sayWelcome() {
+        this.say(ROBIN_MESSAGES.welcome.any());
     }
 
-    private processTellJokeIntent() {
-        this.messages.push(ROBIN_MESSAGES.joke.get(this.context.jokeCounter, ROBIN_MESSAGES.doneJoking.any()));
+    private sayJoke() {
+        this.say(ROBIN_MESSAGES.joke.get(this.context.jokeCounter, ROBIN_MESSAGES.doneJoking.any()));
         this.context.jokeCounter = Math.min(this.context.jokeCounter + 1, ROBIN_MESSAGES.joke.length);
         this.context.lastJokeOn = DateTime.local();
     }
 
-    private processIntents() {
-        const intent = ({
-            "tell_joke": () => this.processTellJokeIntent(),
-        } as any)[this.ephemeral.intents[0]];
-
-        if(intent) {
-            intent();
+    private execute(state: string): string {
+        const transitions = this.states[state] || this.states["init"];
+        for(const t of transitions) {
+            log.info(`SM trying ${state}.${t[0]}`);
+            const next = t[1]();
+            if(next.endsWith("!")) {
+                log.info(`SM transitioning to ${state}.${next}`);
+                return this.execute(next.slice(0, -1));
+            } else if(next !== "") {
+                return state;
+            }
         }
+
+        log.warn("SM is out of options");
+        return state;
     }
 
-    private processBye() {
-        if(this.messages.length === 0 && this.ephemeral.bye) {
-            this.messages.push(ROBIN_MESSAGES.bye.any({name: this.context.userName}));
-        }
-    }
+    transition(): IRobinResult {
+        log.info(`SM starts with ${this.context.state}`);
+        this.context.state = this.execute(this.context.state);
+        log.info(`SM ends with ${this.context.state}`);
 
-    private processConfused() {
-        if(this.messages.length === 0) {
-            this.messages.push(ROBIN_MESSAGES.confused.any());
-        }
-    }
+        this.context.messageCounter += 1;
+        this.context.lastMessageOn = this.session.timestamp;
 
-    static process(
-        wit: any,
-        ephemeral: IEphemeralContext,
-        context: IRobinContext,
-        session: IRobinSession,
-    ): IRobinResult {
-        const logic = new RobinLogic(wit, ephemeral, context, session);
         return {
-            context: logic.context,
-            messages: logic.messages,
-            wit: logic.wit,
+            context: this.context,
+            messages: this.messages,
+            wit: this.wit,
         };
     }
 }
@@ -211,7 +243,7 @@ export class Robin {
     }
 
     private static processIntents(wit: any, ephemeral: IEphemeralContext) {
-        ephemeral.intents = wit.intents.map((i: any) => i.name);
+        ephemeral.intent = wit.intents.map((i: any) => i.name)[0] || "";
     }
 
     async process(session: IRobinSession): Promise<IRobinResult> {
@@ -221,7 +253,7 @@ export class Robin {
             bye: false,
             thanks: false,
             sentiment: "neutral",
-            intents: [],
+            intent: "",
         };
 
         const wit = await this.queryWit(session);
@@ -231,6 +263,7 @@ export class Robin {
 
         Robin.processTraits(wit, ephemeral);
         Robin.processIntents(wit, ephemeral);
-        return RobinLogic.process(wit, ephemeral, context, session);
+
+        return (new RobinLogic(wit, ephemeral, context, session)).transition();
     }
 }

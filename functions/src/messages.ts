@@ -21,6 +21,10 @@ const RAW_MESSAGES = yaml.parse(`
   genericGreeting:
     - Hi there! 😃
   
+  introduction:
+    - My name is Robin, I'm your friendly accountant artificial intelligence.
+    - I'm Robin! Always eager to help.
+  
   bye:
     - See you soon, {{ name }}! 👋😃
     - Bye! 👋😃
