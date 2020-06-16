@@ -75,7 +75,8 @@ async function fetchContext(id: string): Promise<IRobinContext> {
 
     const fromISO = (iso: string) => data.lastMessageOn ? DateTime.fromISO(iso) : DateTime.fromSeconds(0);
     return {
-        state: "init",
+        ...defaultContext(),
+        state: data.state,
         userName: data.userName,
         lastMessageOn: fromISO(data.lastMessageOn),
         messageCounter: data.messageCounter || 0,
@@ -120,7 +121,6 @@ async function handleTelegram(request: functions.Request) {
         text: message.text,
         voice: message.voice && await convertAudioToMp3(await fetchTelegramFile(message.voice.file_id)),
         context: {
-            ...defaultContext(),
             ...await fetchContext(docId),
             userName: message.from.first_name || message.from.username,
         },
