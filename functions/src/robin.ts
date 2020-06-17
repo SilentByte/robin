@@ -82,6 +82,14 @@ class RobinLogic {
                 this.say(ROBIN_MESSAGES.introduction.any());
                 return "main";
             }],
+            ["delete_account", () => {
+                if(this.ephemeral.intent !== "delete_account") {
+                    return "";
+                }
+
+                this.say(ROBIN_MESSAGES.deleteAccountConfirmation.any());
+                return "delete_account";
+            }],
             ["bye", () => {
                 if(this.messages.length === 0 && this.ephemeral.bye) {
                     this.say(ROBIN_MESSAGES.bye.any({name: this.context.userName}));
@@ -96,6 +104,23 @@ class RobinLogic {
                 }
 
                 return "main";
+            }],
+        ],
+        "delete_account": [
+            ["confirmation", () => {
+                if(this.timeout(3)) {
+                    return "main";
+                } else if(this.ephemeral.intent === "feedback_positive") {
+                    this.context.isActive = false;
+                    this.say(ROBIN_MESSAGES.accountDeletionConfirmed.any());
+                    return "main";
+                } else if(this.ephemeral.intent === "feedback_negative") {
+                    this.say(ROBIN_MESSAGES.accountDeletionCanceled.any());
+                    return "main";
+                } else {
+                    this.say(ROBIN_MESSAGES.confused.any());
+                    return "";
+                }
             }],
         ],
     };
@@ -131,6 +156,10 @@ class RobinLogic {
         this.context.lastJokeOn = DateTime.local();
     }
 
+    private timeout(minutes: number): boolean {
+        return this.context.lastMessageOn.diffNow("minutes").minutes > minutes;
+    }
+
     private execute(state: string): string {
         const transitions = this.states[state] || this.states["init"];
         for(const t of transitions) {
@@ -140,7 +169,7 @@ class RobinLogic {
                 log.info(`SM transitioning to ${state}.${next}`);
                 return this.execute(next.slice(0, -1));
             } else if(next !== "") {
-                return state;
+                return next;
             }
         }
 
@@ -285,7 +314,7 @@ export class Robin {
         Robin.processTraits(wit, ephemeral);
         Robin.processIntents(wit, ephemeral);
 
-        // console.log((new RobinLogic(wit, ephemeral, context, session)).toGraphViz());
+        console.log((new RobinLogic(wit, ephemeral, context, session)).toGraphViz());
         return (new RobinLogic(wit, ephemeral, context, session)).transition();
     }
 }

@@ -14,7 +14,20 @@ const RAW_MESSAGES = yaml.parse(`
   accountIsInactive:
     - I'm sorry, this account is currently pending deletion. Once all your data has been
       removed, we can have a new start if you'd like. 😃
-  
+
+  deleteAccountConfirmation:
+    - If I understood you correctly, you would like me to delete your account and all data associated with it.
+      Is this correct? Once your account has been flagged for deletion it can no longer be used until the process
+      has been completed. All your data will be deleted and this process can not be undone. Would you like me to
+      delete your account?
+
+  accountDeletionConfirmed:
+    - Oh! I'm sorry to see you go. 😔 Alright then, I'll make sure your data is promptly deleted.
+      Thanks for talking to me! Maybe we'll meet again some day?
+
+  accountDeletionCanceled:
+    - Alrighty! Thank's for staying! 😃
+
   confused:
     - Hmm... 🤔 I'm sorry, I didn't quite get that...
 
@@ -24,11 +37,11 @@ const RAW_MESSAGES = yaml.parse(`
 
   genericGreeting:
     - Hi there! 😃
-  
+
   introduction:
     - My name is Robin, I'm your friendly accountant artificial intelligence.
     - I'm Robin! Always eager to help.
-  
+
   bye:
     - See you soon, {{ name }}! 👋😃
     - Bye! 👋😃
@@ -37,7 +50,7 @@ const RAW_MESSAGES = yaml.parse(`
   welcome:
     - I'm Robin ♀️, your friendly accountant! I'll be assisting you in keeping to your personal or business budget,
       track your expenses, and try to answer any questions you may have! 😃 Also, people say I'm quite funny --
-      let me know if you want to hear a joke. 😉 
+      let me know if you want to hear a joke. 😉
 
   think:
     - Alright 🤔, let's see...
