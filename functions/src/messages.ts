@@ -10,6 +10,10 @@ const RAW_MESSAGES = yaml.parse(`
 
   messageTypeNotSupported:
     - Oh no, looks like I haven't received training for this message format yet. 😔
+
+  accountIsInactive:
+    - I'm sorry, this account is currently pending deletion. Once all your data has been
+      removed, we can have a new start if you'd like. 😃
   
   confused:
     - Hmm... 🤔 I'm sorry, I didn't quite get that...

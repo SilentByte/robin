@@ -43,6 +43,7 @@ export interface IRobinResult {
 export function defaultContext(): IRobinContext {
     return {
         state: "init",
+        active: true,
         userName: "anonymous",
         lastMessageOn: DateTime.local(),
         messageCounter: 0,
