@@ -10,6 +10,7 @@ import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
 
 export interface IRobinContext {
+    isActive: boolean;
     state: string;
     userName: string;
     lastMessageOn: DateTime;
@@ -43,7 +44,7 @@ export interface IRobinResult {
 export function defaultContext(): IRobinContext {
     return {
         state: "init",
-        active: true,
+        isActive: true,
         userName: "anonymous",
         lastMessageOn: DateTime.local(),
         messageCounter: 0,

@@ -75,9 +75,8 @@ async function fetchContext(id: string): Promise<IRobinContext> {
 
     const fromISO = (iso: string) => data.lastMessageOn ? DateTime.fromISO(iso) : DateTime.fromSeconds(0);
     return {
-        ...defaultContext(),
         state: data.state,
-        active: data.active,
+        isActive: data.isActive,
         userName: data.userName,
         lastMessageOn: fromISO(data.lastMessageOn),
         messageCounter: data.messageCounter || 0,
@@ -116,14 +115,15 @@ async function handleTelegram(request: functions.Request) {
         return;
     }
 
+    const docId = `telegram:${message.from.id}`;
     const context = await fetchContext(docId);
-    if(!context.active) {
+
+    if(!context.isActive) {
         log.warn("Accessing inactive user");
         await sendTelegram(message.chat.id, ROBIN_MESSAGES.accountIsInactive.any());
         return;
     }
 
-    const docId = `telegram:${message.from.id}`;
     const result = await robin.process({
         timestamp: DateTime.fromSeconds(message.date), // TODO: Adjust timezone based on user location.
         text: message.text,
