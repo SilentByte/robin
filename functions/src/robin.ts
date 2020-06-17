@@ -194,22 +194,22 @@ class RobinLogic {
         };
     }
 
-    toGraphViz(): string {
-        let dot = "digraph {\n";
-        dot += "    rankdir=LR\n";
-
-        for(const [state, transitions] of Object.entries(this.states)) {
-            for(const t of transitions) {
-                const label = t[0];
-                for(const m of t[1].toString().matchAll(/return "([^"]+)"/g)) {
-                    const suffix = m[1].endsWith("!") ? "!" : "";
-                    dot += `    ${state} -> ${m[1].replace("!", "")} [label="${label}${suffix}"]\n`;
-                }
-            }
-        }
-
-        return dot + "}";
-    }
+    // toGraphViz(): string {
+    //     let dot = "digraph {\n";
+    //     dot += "    rankdir=LR\n";
+    //
+    //     for(const [state, transitions] of Object.entries(this.states)) {
+    //         for(const t of transitions) {
+    //             const label = t[0];
+    //             for(const m of t[1].toString().matchAll(/return "([^"]+)"/g)) {
+    //                 const suffix = m[1].endsWith("!") ? "!" : "";
+    //                 dot += `    ${state} -> ${m[1].replace("!", "")} [label="${label}${suffix}"]\n`;
+    //             }
+    //         }
+    //     }
+    //
+    //     return dot + "}";
+    // }
 }
 
 export class Robin {
@@ -314,7 +314,7 @@ export class Robin {
         Robin.processTraits(wit, ephemeral);
         Robin.processIntents(wit, ephemeral);
 
-        console.log((new RobinLogic(wit, ephemeral, context, session)).toGraphViz());
+        // console.log((new RobinLogic(wit, ephemeral, context, session)).toGraphViz());
         return (new RobinLogic(wit, ephemeral, context, session)).transition();
     }
 }
