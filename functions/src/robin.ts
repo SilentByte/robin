@@ -57,69 +57,69 @@ export function defaultContext(): IRobinContext {
 class RobinLogic {
     private messages: string[] = [];
 
-    private readonly states: { [name: string]: Array<[string, () => string]> } = {
+    private readonly states: { [name: string]: Array<[string, () => [string] | [string, string]]> } = {
         "init": [
             ["first_interaction", () => {
                 this.sayHi();
                 this.sayWelcome();
-                return "main!";
+                return ["main!"];
             }],
         ],
         "main": [
             ["tell_joke", () => {
                 if(this.ephemeral.intent !== "tell_joke") {
-                    return "";
+                    return [""];
                 }
 
                 this.sayJoke();
-                return "main";
+                return ["main"];
             }],
             ["who_are_you", () => {
                 if(this.ephemeral.intent !== "who_are_you") {
-                    return "";
+                    return [""];
                 }
 
                 this.say(ROBIN_MESSAGES.introduction.any());
-                return "main";
+                return ["main"];
             }],
             ["delete_account", () => {
                 if(this.ephemeral.intent !== "delete_account") {
-                    return "";
+                    return [""];
                 }
 
                 this.say(ROBIN_MESSAGES.deleteAccountConfirmation.any());
-                return "delete_account";
+                return ["delete_account"];
             }],
             ["bye", () => {
                 if(this.messages.length === 0 && this.ephemeral.bye) {
                     this.say(ROBIN_MESSAGES.bye.any({name: this.context.userName}));
-                    return "main";
+                    return ["main"];
                 }
 
-                return "";
+                return [""];
             }],
             ["confused", () => {
                 if(this.messages.length === 0) {
                     this.say(ROBIN_MESSAGES.confused.any());
                 }
 
-                return "main";
+                return ["main"];
             }],
         ],
         "delete_account": [
             ["confirmation", () => {
                 if(this.timeout(3)) {
-                    return "main";
+                    return ["main", "timeout"];
                 } else if(this.ephemeral.intent === "feedback_positive") {
                     this.context.isActive = false;
                     this.say(ROBIN_MESSAGES.accountDeletionConfirmed.any());
-                    return "main";
+                    return ["main", "positive"];
                 } else if(this.ephemeral.intent === "feedback_negative") {
                     this.say(ROBIN_MESSAGES.accountDeletionCanceled.any());
-                    return "main";
+                    return ["main", "negative"];
                 } else {
                     this.say(ROBIN_MESSAGES.confused.any());
-                    return "";
+                    return ["", "confused"];
                 }
             }],
         ],
@@ -165,11 +165,12 @@ class RobinLogic {
         for(const t of transitions) {
             log.info(`SM trying ${state}.${t[0]}`);
             const next = t[1]();
-            if(next.endsWith("!")) {
-                log.info(`SM transitioning to ${state}.${next}`);
-                return this.execute(next.slice(0, -1));
-            } else if(next !== "") {
-                return next;
+            if(next[0].endsWith("!")) {
+                log.info(`SM transitioning to ${state}.${next.join(":")}`);
+                return this.execute(next[0].slice(0, -1));
+            } else if(next[0] !== "") {
+                log.info(`SM transitioning to ${state}.${next.join(":")}`);
+                return next[0];
             }
         }
 
@@ -200,10 +201,10 @@ class RobinLogic {
     //
     //     for(const [state, transitions] of Object.entries(this.states)) {
     //         for(const t of transitions) {
-    //             const label = t[0];
-    //             for(const m of t[1].toString().matchAll(/return "([^"]+)"/g)) {
+    //             const matches = t[1].toString().matchAll(/return \["([^"]+)"(,\s*"([^"]+)")?]/g);
+    //             for(const m of matches) {
     //                 const suffix = m[1].endsWith("!") ? "!" : "";
-    //                 dot += `    ${state} -> ${m[1].replace("!", "")} [label="${label}${suffix}"]\n`;
+    //                 dot += `    ${state} -> ${m[1].replace("!", "")} [label="${m[3] || t[0]}${suffix}"]\n`;
     //             }
     //         }
     //     }
