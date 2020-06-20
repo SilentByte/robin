@@ -4,10 +4,18 @@
  */
 
 import axios from "axios";
-import { DateTime } from "luxon";
+import {
+    DateTime,
+    Interval,
+} from "luxon";
 
 import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
+
+const ROBIN_DATE_FORMAT = "MMMM dd, yyyy";
+
+export type RobinSentiment = "negative" | "neutral" | "positive";
+export type RobinDateTimeGrain = "day" | "week" | "month";
 
 export interface IRobinContext {
     isActive: boolean;
@@ -18,14 +26,32 @@ export interface IRobinContext {
     lastGreetingOn: DateTime;
     jokeCounter: number;
     lastJokeOn: DateTime;
+    currentExpenseItem?: string;
+    currentExpenseValue?: number;
+    currentExpenseIncurredOn?: DateTime;
 }
 
 interface IEphemeralContext {
     greetings: boolean;
     bye: boolean;
     thanks: boolean;
-    sentiment: "negative" | "neutral" | "positive";
+
+    sentiment: RobinSentiment;
     intent: string;
+
+    item?: string;
+    money?: {
+        body: string;
+        value: number;
+    };
+    moment?: {
+        grain: RobinDateTimeGrain;
+        value: DateTime;
+    }
+    interval?: {
+        grain: RobinDateTimeGrain;
+        value: Interval;
+    };
 }
 
 export interface IRobinSession {
@@ -35,9 +61,19 @@ export interface IRobinSession {
     context: IRobinContext;
 }
 
+export interface IRobinAddExpenseAction {
+    type: "add_expense";
+    item: string;
+    value: number;
+    incurredOn: DateTime;
+}
+
+export type  RobinAction = IRobinAddExpenseAction;
+
 export interface IRobinResult {
     context: IRobinContext;
     messages: string[];
+    actions: RobinAction[];
     wit: any;
 }
 
@@ -51,11 +87,15 @@ export function defaultContext(): IRobinContext {
         lastGreetingOn: DateTime.fromSeconds(0),
         jokeCounter: 0,
         lastJokeOn: DateTime.fromSeconds(0),
+        currentExpenseItem: undefined,
+        currentExpenseValue: undefined,
+        currentExpenseIncurredOn: undefined,
     };
 }
 
 class RobinLogic {
     private messages: string[] = [];
+    private actions: RobinAction[] = [];
 
     private readonly states: { [name: string]: Array<[string, () => [string] | [string, string]]> } = {
         "init": [
@@ -65,6 +105,7 @@ class RobinLogic {
                 return ["main!"];
             }],
         ],
+
         "main": [
             ["tell_joke", () => {
                 if(this.ephemeral.intent !== "tell_joke") {
@@ -90,6 +131,24 @@ class RobinLogic {
                 this.say(ROBIN_MESSAGES.deleteAccountConfirmation.any());
                 return ["delete_account"];
             }],
+            ["add_expense", () => {
+                if(this.ephemeral.intent !== "add_expense") {
+                    return [""];
+                }
+
+                this.context.currentExpenseItem = undefined;
+                this.context.currentExpenseIncurredOn = undefined;
+                this.context.currentExpenseValue = undefined;
+
+                if(!this.ephemeral.item
+                    || !this.ephemeral.interval
+                    || !this.ephemeral.moment
+                    || !this.ephemeral.money) {
+                    this.say(ROBIN_MESSAGES.addExpense.any());
+                }
+
+                return ["add_expense!"];
+            }],
             ["bye", () => {
                 if(this.messages.length === 0 && this.ephemeral.bye) {
                     this.say(ROBIN_MESSAGES.bye.any({name: this.context.userName}));
@@ -106,6 +165,7 @@ class RobinLogic {
                 return ["main"];
             }],
         ],
+
         "delete_account": [
             ["confirmation", () => {
                 if(this.timeout(3)) {
@@ -123,6 +183,92 @@ class RobinLogic {
                 }
             }],
         ],
+
+        "add_expense": [
+            ["add_expense", () => {
+                if(this.ephemeral.item && !this.context.currentExpenseItem) {
+                    this.context.currentExpenseItem = this.ephemeral.item;
+                }
+
+                if(this.ephemeral.moment && !this.context.currentExpenseIncurredOn) {
+                    this.context.currentExpenseIncurredOn = this.ephemeral.moment.value;
+                } else if(this.ephemeral.interval && !this.context.currentExpenseIncurredOn) {
+                    this.context.currentExpenseIncurredOn = this.ephemeral.interval.value.start;
+                }
+
+                if(this.ephemeral.money && !this.context.currentExpenseValue) {
+                    this.context.currentExpenseValue = this.ephemeral.money.value;
+                }
+
+                if(!this.context.currentExpenseItem) {
+                    return ["specify_expense_item!"];
+                }
+
+                if(!this.context.currentExpenseIncurredOn) {
+                    return ["specify_expense_moment!"];
+                }
+
+                if(!this.context.currentExpenseValue) {
+                    return ["specify_expense_value!"];
+                }
+
+                this.action({
+                    type: "add_expense",
+                    item: this.context.currentExpenseItem,
+                    value: this.context.currentExpenseValue,
+                    incurredOn: this.context.currentExpenseIncurredOn,
+                });
+
+                this.say(ROBIN_MESSAGES.expenseCompleted.any({
+                    item: this.context.currentExpenseItem,
+                    value: `$${this.context.currentExpenseValue}`,
+                    moment: this.context.currentExpenseIncurredOn.toLocaleString(DateTime.DATE_FULL),
+                }));
+
+                return ["main", "expense_added"];
+            }],
+        ],
+
+        "specify_expense_item": [
+            ["specify_expense_item", () => {
+                if(!this.ephemeral.item) {
+                    this.say(ROBIN_MESSAGES.specifyExpenseItem.any());
+                    return [""];
+                }
+
+                this.context.currentExpenseItem = this.ephemeral.item;
+                return ["add_expense!", "item_specified"];
+            }],
+        ],
+
+        "specify_expense_moment": [
+            ["specify_expense_moment", () => {
+                if(!this.ephemeral.moment && !this.ephemeral.interval) {
+                    this.say(ROBIN_MESSAGES.specifyExpenseMoment.any());
+                    return [""];
+                }
+
+                if(this.ephemeral.moment) {
+                    this.context.currentExpenseIncurredOn = this.ephemeral.moment.value;
+                } else {
+                    this.context.currentExpenseIncurredOn = this.ephemeral.interval!.value.start;
+                }
+
+                return ["add_expense!", "moment_specified"];
+            }],
+        ],
+
+        "specify_expense_value": [
+            ["specify_expense_value", () => {
+                if(!this.ephemeral.money) {
+                    this.say(ROBIN_MESSAGES.specifyExpenseValue.any());
+                    return [""];
+                }
+
+                this.context.currentExpenseValue = this.ephemeral.money.value;
+                return ["add_expense!", "value_specified"];
+            }],
+        ],
     };
 
     constructor(
@@ -132,6 +278,10 @@ class RobinLogic {
         private session: IRobinSession,
     ) {
         //
+    }
+
+    private action(action: RobinAction) {
+        this.actions.push(action);
     }
 
     private say(message: string) {
@@ -191,6 +341,7 @@ class RobinLogic {
         return {
             context: this.context,
             messages: this.messages,
+            actions: this.actions,
             wit: this.wit,
         };
     }
@@ -297,6 +448,60 @@ export class Robin {
         ephemeral.intent = wit.intents.map((i: any) => i.name)[0] || "";
     }
 
+    private static processEntities(wit: any, ephemeral: IEphemeralContext) {
+        const entities = Object
+            .values(wit.entities as any[])
+            .reduce((a, e) => {
+                a.push(...e);
+                return a;
+            }, []);
+
+        for(const entity of entities) {
+            switch(entity.name) {
+                case "item":
+                    if(entity.type === "value") {
+                        ephemeral.item = entity.value;
+                    }
+                    break;
+
+                case "wit$amount_of_money":
+                    if(entity.type === "value") {
+                        ephemeral.money = {
+                            body: entity.body,
+                            value: entity.value,
+                        };
+                    }
+                    break;
+
+                case "wit$number":
+                    if(entity.type === "value" && !ephemeral.money) {
+                        ephemeral.money = {
+                            body: entity.body,
+                            value: entity.value,
+                        };
+                    }
+                    break;
+
+                case "wit$datetime":
+                    if(entity.type === "value") {
+                        ephemeral.moment = {
+                            grain: entity.grain,
+                            value: DateTime.fromISO(entity.value),
+                        };
+                    } else if(entity.typeCheck === "interval") {
+                        ephemeral.interval = {
+                            grain: entity.grain,
+                            value: Interval.fromDateTimes(
+                                DateTime.fromISO(entity.from),
+                                DateTime.fromISO(entity.to),
+                            ),
+                        };
+                    }
+                    break;
+            }
+        }
+    }
+
     async process(session: IRobinSession): Promise<IRobinResult> {
         const context = Object.assign({}, session.context);
         const ephemeral: IEphemeralContext = {
@@ -314,6 +519,7 @@ export class Robin {
 
         Robin.processTraits(wit, ephemeral);
         Robin.processIntents(wit, ephemeral);
+        Robin.processEntities(wit, ephemeral);
 
         // console.log((new RobinLogic(wit, ephemeral, context, session)).toGraphViz());
         return (new RobinLogic(wit, ephemeral, context, session)).transition();

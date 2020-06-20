@@ -31,10 +31,6 @@ if(fs.existsSync(HISTORY_FILE_NAME)) {
     (rl as any).history = JSON.parse(fs.readFileSync(HISTORY_FILE_NAME, "utf8")) || [];
 }
 
-const robin = new Robin({
-    token: process.env.WIT_ACCESS_TOKEN || "",
-});
-
 function prompt(): Promise<string> {
     return new Promise(resolve => {
         rl.question("robin> ", input => {
@@ -67,7 +63,9 @@ function formatMessage(message: string) {
                 continue;
         }
 
-        const result = await robin.process({
+        const result = await new Robin({
+            token: process.env.WIT_ACCESS_TOKEN || "",
+        }).process({
             context,
             text,
             timestamp: DateTime.local(),
@@ -83,8 +81,8 @@ function formatMessage(message: string) {
 
         console.log(
             columnify(Object.keys(context).map(k => {
-                const previous = (context as any)[k].toString();
-                let next = (result.context as any)[k].toString();
+                const previous = (context as any)[k]?.toString() || "null";
+                let next = (result.context as any)[k]?.toString() || "null";
 
                 let state = k;
                 if(previous !== next) {
@@ -103,6 +101,11 @@ function formatMessage(message: string) {
             }),
         );
         console.log("");
+
+        if(result.actions) {
+            console.log(yaml.stringify(result.actions));
+            console.log("");
+        }
 
         context = result.context;
     }

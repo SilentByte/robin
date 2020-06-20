@@ -65,6 +65,20 @@ const RAW_MESSAGES = yaml.parse(`
     - I almost fell down the stairs the other day... I lost *my balance*. ☺️
     - Aww! 🤗 Thanks for your kind gift 🎁, I really *depreciate* it!
 
+  addExpense:
+    - Alright, I'm going to add a new expense.
+
+  specifyExpenseItem:
+    - What would you like to add?
+
+  specifyExpenseMoment:
+    - When was that expense incurred?
+
+  specifyExpenseValue:
+    - What was the amount you paid for this expense?
+
+  expenseCompleted:
+    - Sweet! I just added '{{item}}' for {{value}} on {{moment}} to your expenses. 😉
 `);
 
 type KeyValueMap = { [key: string]: string };

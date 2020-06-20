@@ -23,6 +23,10 @@ const TELEGRAM_API_URL = "https://api.telegram.org";
 admin.initializeApp();
 
 const db = admin.firestore();
+db.settings({
+    ignoreUndefinedProperties: true,
+});
+
 const config = functions.config();
 const robin = new Robin({
     token: config.wit.access_token,
@@ -83,6 +87,9 @@ async function fetchContext(id: string): Promise<IRobinContext> {
         lastGreetingOn: fromISO(data.lastGreetingOn),
         jokeCounter: data.jokeCounter || 0,
         lastJokeOn: fromISO(data.lastJokeOn),
+        currentExpenseItem: data.currentExpenseItem,
+        currentExpenseValue: data.currentExpenseValue,
+        currentExpenseIncurredOn: data.currentExpenseIncurredOn,
     };
 }
 
@@ -96,7 +103,9 @@ async function updateContext(id: string, context: IRobinContext) {
         }
     });
 
-    await db.collection("users").doc(id).set(serializedContext);
+    await db.collection("users").doc(id).set(serializedContext, {
+        merge: true,
+    });
 }
 
 async function handleTelegram(request: functions.Request) {
