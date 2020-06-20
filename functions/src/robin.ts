@@ -141,9 +141,9 @@ class RobinLogic {
                 this.context.currentExpenseValue = undefined;
 
                 if(!this.ephemeral.item
-                    || !this.ephemeral.interval
-                    || !this.ephemeral.moment
-                    || !this.ephemeral.money) {
+                    && !this.ephemeral.interval
+                    && !this.ephemeral.moment
+                    && !this.ephemeral.money) {
                     this.say(ROBIN_MESSAGES.addExpense.any());
                 }
 
@@ -159,7 +159,11 @@ class RobinLogic {
             }],
             ["confused", () => {
                 if(this.messages.length === 0) {
-                    this.say(ROBIN_MESSAGES.confused.any());
+                    if(this.ephemeral.greetings) {
+                        this.say(ROBIN_MESSAGES.hi.any());
+                    } else {
+                        this.say(ROBIN_MESSAGES.confused.any());
+                    }
                 }
 
                 return ["main"];
@@ -391,7 +395,7 @@ export class Robin {
             },
         });
 
-        log.debug(response.data);
+        log.info(response.data);
         return response.data;
     }
 
@@ -411,7 +415,7 @@ export class Robin {
             },
         });
 
-        log.debug(response.data);
+        log.info(response.data);
         return response.data;
     }
 

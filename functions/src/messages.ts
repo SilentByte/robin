@@ -42,6 +42,11 @@ const RAW_MESSAGES = yaml.parse(`
     - My name is Robin, I'm your friendly accountant artificial intelligence.
     - I'm Robin! Always eager to help.
 
+  hi:
+    - Hi! 👋😃
+    - Hey, how's it going? 😃
+    - Hello, Bonjour, 你好! 😃
+
   bye:
     - See you soon, {{ name }}! 👋😃
     - Bye! 👋😃
