@@ -7,7 +7,10 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
 import axios from "axios";
-import { DateTime } from "luxon";
+import {
+    DateTime,
+    Settings as LuxonSettings,
+} from "luxon";
 
 import log from "./log";
 import { convertAudioToMp3 } from "./convert";
@@ -19,6 +22,8 @@ import {
 } from "./robin";
 
 const TELEGRAM_API_URL = "https://api.telegram.org";
+
+LuxonSettings.defaultLocale = "en";
 
 admin.initializeApp();
 
