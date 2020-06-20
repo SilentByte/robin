@@ -12,7 +12,7 @@ import {
 import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
 
-const ROBIN_DATE_FORMAT = "MMMM dd, yyyy";
+
 
 export type RobinSentiment = "negative" | "neutral" | "positive";
 export type RobinDateTimeGrain = "day" | "week" | "month";

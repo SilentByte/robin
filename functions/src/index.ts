@@ -171,3 +171,14 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
     }
 });
 
+export const deleteUser = functions.firestore
+    .document("users/{id}")
+    .onUpdate(async (change, _context) => {
+        if(change.after.data().isActive === false) {
+            const id = change.after.id;
+
+            log.info(`Deleting user ${id}`);
+            await db.collection("users").doc(id).delete();
+        }
+    });
+
