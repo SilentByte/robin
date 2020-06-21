@@ -102,7 +102,7 @@ function formatMessage(message: string) {
         );
         console.log("");
 
-        if(result.actions) {
+        if(result.actions.length > 0) {
             console.log(yaml.stringify(result.actions));
             console.log("");
         }

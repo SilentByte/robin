@@ -94,7 +94,7 @@ async function fetchContext(id: string): Promise<IRobinContext> {
         lastJokeOn: fromISO(data.lastJokeOn),
         currentExpenseItem: data.currentExpenseItem,
         currentExpenseValue: data.currentExpenseValue,
-        currentExpenseIncurredOn: data.currentExpenseIncurredOn,
+        currentExpenseIncurredOn: fromISO(data.currentExpenseIncurredOn),
     };
 }
 
@@ -148,8 +148,21 @@ async function handleTelegram(request: functions.Request) {
         },
     });
 
+    const actions: Promise<any>[] = result.actions.map(a => {
+        if(a.type === "add_expense") {
+            return db.collection("users").doc(docId).collection("expenses").add({
+                item: a.item,
+                value: a.value,
+                incurredOn: a.incurredOn.toISO(),
+            });
+        }
+
+        return Promise.resolve();
+    });
+
     await Promise.all([
         updateContext(docId, result.context),
+        ...actions,
         (async () => {
             log.info("Sending Telegram response...");
             for(const m of result.messages) {
@@ -163,9 +176,6 @@ async function handleTelegram(request: functions.Request) {
 export const robinTelegram = functions.https.onRequest(async (request, response) => {
     try {
         await handleTelegram(request);
-    } catch(e) {
-        log.error("Unhandled exception");
-        log.error(e);
     } finally {
         response.end();
     }
