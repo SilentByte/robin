@@ -80,6 +80,12 @@ const RAW_MESSAGES = yaml.parse(`
     - I almost fell down the stairs the other day... I lost *my balance*. ☺️
     - Aww! 🤗 Thanks for your kind gift 🎁, I really *depreciate* it!
 
+  specifyBudget:
+    - What would you like your weekly budget to be?
+  
+  settingBudget:
+    - I have set your budget to {{value}}.
+
   addExpense:
     - Alright, I'm going to add a new expense.
 

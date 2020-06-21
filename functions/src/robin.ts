@@ -6,11 +6,12 @@
 import axios from "axios";
 import {
     DateTime,
-    Interval,
+    Interval, Settings,
 } from "luxon";
 
 import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
+import defaultNumberingSystem = Settings.defaultNumberingSystem;
 
 export type RobinSentiment = "negative" | "neutral" | "positive";
 export type RobinDateTimeGrain = "day" | "week" | "month" | "year";
@@ -24,6 +25,7 @@ export interface IRobinContext {
     lastGreetingOn: DateTime;
     jokeCounter: number;
     lastJokeOn: DateTime;
+    budget: number;
     currentExpenseItem?: string;
     currentExpenseValue?: number;
     currentExpenseIncurredOn?: DateTime;
@@ -89,6 +91,7 @@ export function defaultContext(): IRobinContext {
         lastGreetingOn: DateTime.fromSeconds(0),
         jokeCounter: 0,
         lastJokeOn: DateTime.fromSeconds(0),
+        budget: 500,
         currentExpenseItem: undefined,
         currentExpenseValue: undefined,
         currentExpenseIncurredOn: undefined,
@@ -140,6 +143,13 @@ class RobinLogic {
 
                 this.say(ROBIN_MESSAGES.deleteAccountConfirmation.any());
                 return ["delete_account"];
+            }],
+            ["set_budget", async () => {
+                if(this.ephemeral.intent !== "set_budget") {
+                    return [""];
+                }
+
+                return ["set_budget!"];
             }],
             ["add_expense", async () => {
                 if(this.ephemeral.intent !== "add_expense") {
@@ -235,6 +245,22 @@ class RobinLogic {
                     this.say(ROBIN_MESSAGES.confused.any());
                     return ["", "confused"];
                 }
+            }],
+        ],
+
+        "set_budget": [
+            ["set_budget", async () => {
+                if(!this.ephemeral.money) {
+                    this.say(ROBIN_MESSAGES.specifyBudget.any());
+                    return [""];
+                }
+
+                this.context.budget = this.ephemeral.money.value;
+                this.say(ROBIN_MESSAGES.settingBudget.any({
+                    value: `$${this.ephemeral.money.value}`,
+                }));
+
+                return ["main"];
             }],
         ],
 

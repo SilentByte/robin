@@ -93,6 +93,7 @@ async function fetchContext(id: string): Promise<IRobinContext> {
         lastGreetingOn: DateTime.fromSeconds(data.lastGreetingOn || 0),
         jokeCounter: data.jokeCounter || 0,
         lastJokeOn: DateTime.fromSeconds(data.lastJokeOn || 0),
+        budget: data.budget || 0,
         currentExpenseItem: data.currentExpenseItem,
         currentExpenseValue: data.currentExpenseValue,
         currentExpenseIncurredOn: DateTime.fromSeconds(data.currentExpenseIncurredOn || 0),
