@@ -123,6 +123,14 @@ class RobinLogic {
                 this.say(ROBIN_MESSAGES.introduction.any());
                 return ["main"];
             }],
+            ["are_you_bot", () => {
+                if(this.ephemeral.intent !== "are_you_bot") {
+                    return [""];
+                }
+
+                this.say(ROBIN_MESSAGES.bot.any());
+                return ["main"];
+            }],
             ["delete_account", () => {
                 if(this.ephemeral.intent !== "delete_account") {
                     return [""];

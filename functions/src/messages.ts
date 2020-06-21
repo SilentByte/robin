@@ -42,6 +42,11 @@ const RAW_MESSAGES = yaml.parse(`
     - My name is Robin, I'm your friendly accountant artificial intelligence.
     - I'm Robin! Always eager to help.
 
+  bot:
+    - I am an artificial intelligence with a user interfaced based on natural language processing. 😃
+    - I am not a human, but... I'm still friendly!
+    - I am an accountant first, and an artificial intelligence second! 😃
+
   hi:
     - Hi! 👋😃
     - Hey, how's it going? 😃
@@ -84,6 +89,7 @@ const RAW_MESSAGES = yaml.parse(`
 
   expenseCompleted:
     - Sweet! I just added '{{item}}' for {{value}} on {{moment}} to your expenses. 😉
+
 `);
 
 type KeyValueMap = { [key: string]: string };
