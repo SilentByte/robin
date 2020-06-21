@@ -156,8 +156,16 @@ class RobinLogic {
                     return [""];
                 }
 
+                const totalExpenses = (await this.session.queryExpenses(
+                    Interval.fromDateTimes(
+                        DateTime.local().startOf("week"),
+                        DateTime.local().endOf("week"),
+                    )))
+                    .reduce((p, c) => p + c.value, 0);
+
                 this.say(ROBIN_MESSAGES.queryBudget.any({
                     value: `$${this.context.budget}`,
+                    balance: `$${this.context.budget - totalExpenses}`,
                 }));
 
                 return ["main"];
@@ -170,7 +178,7 @@ class RobinLogic {
                 if(!this.ephemeral.money) {
                     this.say(ROBIN_MESSAGES.specifyAffordabilityValue.any());
                 } else {
-                    const total = (await this.session.queryExpenses(
+                    const totalExpenses = (await this.session.queryExpenses(
                         Interval.fromDateTimes(
                             DateTime.local().startOf("week"),
                             DateTime.local().endOf("week"),
@@ -179,7 +187,7 @@ class RobinLogic {
 
                     this.say(ROBIN_MESSAGES.queryAffordability.any({
                         value: `$${this.ephemeral.money.value}`,
-                        remaining: `$${this.context.budget - total - this.ephemeral.money.value}`,
+                        balance: `$${this.context.budget - totalExpenses - this.ephemeral.money.value}`,
                     }));
                 }
 

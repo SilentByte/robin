@@ -87,13 +87,13 @@ const RAW_MESSAGES = yaml.parse(`
     - I have set your budget to {{value}}.
 
   queryBudget:
-    - Your budget is currently set to {{value}} per week.
+    - Your budget is currently set to {{value}} per week. This week's balance is at {{balance}}.
 
   specifyAffordabilityValue:
     - Please tell me how much you intend to spend.
 
   queryAffordability:
-    - Assuming you spend {{value}}, your budget for the week would be at {{remaining}}.
+    - Assuming you spend {{value}}, your budget for the week would be at {{balance}}.
 
   addExpense:
     - Alright, I'm going to add a new expense.
