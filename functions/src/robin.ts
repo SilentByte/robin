@@ -458,7 +458,7 @@ class RobinLogic {
         log.info(`SM ends with ${this.context.state}`);
 
         this.context.messageCounter += 1;
-        this.context.lastMessageOn = this.session.timestamp;
+        this.context.lastMessageOn = DateTime.local(); // this.session.timestamp;
 
         return {
             context: this.context,
