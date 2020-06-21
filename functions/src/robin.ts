@@ -162,6 +162,29 @@ class RobinLogic {
 
                 return ["main"];
             }],
+            ["query_affordability", async () => {
+                if(this.ephemeral.intent !== "query_affordability") {
+                    return [""];
+                }
+
+                if(!this.ephemeral.money) {
+                    this.say(ROBIN_MESSAGES.specifyAffordabilityValue.any());
+                } else {
+                    const total = (await this.session.queryExpenses(
+                        Interval.fromDateTimes(
+                            DateTime.local().startOf("week"),
+                            DateTime.local().endOf("week"),
+                        )))
+                        .reduce((p, c) => p + c.value, 0);
+
+                    this.say(ROBIN_MESSAGES.queryAffordability.any({
+                        value: `$${this.ephemeral.money.value}`,
+                        remaining: `$${this.context.budget - total - this.ephemeral.money.value}`,
+                    }));
+                }
+
+                return ["main"];
+            }],
             ["add_expense", async () => {
                 if(this.ephemeral.intent !== "add_expense") {
                     return [""];
