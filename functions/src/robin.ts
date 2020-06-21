@@ -12,8 +12,6 @@ import {
 import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
 
-
-
 export type RobinSentiment = "negative" | "neutral" | "positive";
 export type RobinDateTimeGrain = "day" | "week" | "month";
 
@@ -157,18 +155,12 @@ class RobinLogic {
 
                 return ["add_expense!"];
             }],
-            ["bye", () => {
-                if(this.messages.length === 0 && this.ephemeral.bye) {
-                    this.say(ROBIN_MESSAGES.bye.any({name: this.context.userName}));
-                    return ["main"];
-                }
-
-                return [""];
-            }],
             ["confused", () => {
                 if(this.messages.length === 0) {
                     if(this.ephemeral.greetings) {
                         this.say(ROBIN_MESSAGES.hi.any());
+                    } else if(this.ephemeral.bye) {
+                        this.say(ROBIN_MESSAGES.bye.any({name: this.context.userName}));
                     } else {
                         this.say(ROBIN_MESSAGES.confused.any());
                     }
