@@ -178,7 +178,12 @@ export const deleteUser = functions.firestore
             const id = change.after.id;
 
             log.info(`Deleting user ${id}`);
-            await db.collection("users").doc(id).delete();
+
+            const batch = db.batch();
+            (await db.collection("users").doc(id).collection("expenses").get())
+                .forEach(snap => batch.delete(snap.ref));
+
+            batch.delete(db.collection("users").doc(id));
+            await batch.commit();
         }
     });
-
