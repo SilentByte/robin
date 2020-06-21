@@ -157,7 +157,9 @@ class RobinLogic {
             }],
             ["confused", () => {
                 if(this.messages.length === 0) {
-                    if(this.ephemeral.greetings) {
+                    if(this.ephemeral.thanks) {
+                        this.say(ROBIN_MESSAGES.thanks.any());
+                    } else if(this.ephemeral.greetings) {
                         this.say(ROBIN_MESSAGES.hi.any());
                     } else if(this.ephemeral.bye) {
                         this.say(ROBIN_MESSAGES.bye.any({name: this.context.userName}));

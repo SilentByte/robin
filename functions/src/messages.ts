@@ -57,6 +57,11 @@ const RAW_MESSAGES = yaml.parse(`
     - Bye! 👋😃
     - Until next time, cheers! 👋😃
 
+  thanks:
+    - You're welcome!
+    - No problem!
+    - That's what I'm here for! 😃
+
   welcome:
     - I'm Robin ♀️, your friendly accountant! I'll be assisting you in keeping to your personal or business budget,
       track your expenses, and try to answer any questions you may have! 😃 Also, people say I'm quite funny --
