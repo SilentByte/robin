@@ -13,7 +13,7 @@ import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
 
 export type RobinSentiment = "negative" | "neutral" | "positive";
-export type RobinDateTimeGrain = "day" | "week" | "month";
+export type RobinDateTimeGrain = "day" | "week" | "month" | "year";
 
 export interface IRobinContext {
     isActive: boolean;
@@ -52,18 +52,22 @@ interface IEphemeralContext {
     };
 }
 
+export interface IRobinExpense {
+    item: string;
+    value: number;
+    incurredOn: DateTime;
+}
+
 export interface IRobinSession {
     text?: string;
     voice?: ArrayBuffer;
     timestamp: DateTime;
     context: IRobinContext;
+    queryExpenses(interval: Interval): Promise<IRobinExpense[]>;
 }
 
-export interface IRobinAddExpenseAction {
+export interface IRobinAddExpenseAction extends IRobinExpense {
     type: "add_expense";
-    item: string;
-    value: number;
-    incurredOn: DateTime;
 }
 
 export type  RobinAction = IRobinAddExpenseAction;
@@ -95,9 +99,9 @@ class RobinLogic {
     private messages: string[] = [];
     private actions: RobinAction[] = [];
 
-    private readonly states: { [name: string]: Array<[string, () => [string] | [string, string]]> } = {
+    private readonly states: { [name: string]: Array<[string, () => Promise<[string] | [string, string]>]> } = {
         "init": [
-            ["first_interaction", () => {
+            ["first_interaction", async () => {
                 this.sayHi();
                 this.sayWelcome();
                 return ["main!"];
@@ -105,7 +109,7 @@ class RobinLogic {
         ],
 
         "main": [
-            ["tell_joke", () => {
+            ["tell_joke", async () => {
                 if(this.ephemeral.intent !== "tell_joke") {
                     return [""];
                 }
@@ -113,7 +117,7 @@ class RobinLogic {
                 this.sayJoke();
                 return ["main"];
             }],
-            ["who_are_you", () => {
+            ["who_are_you", async () => {
                 if(this.ephemeral.intent !== "who_are_you") {
                     return [""];
                 }
@@ -121,7 +125,7 @@ class RobinLogic {
                 this.say(ROBIN_MESSAGES.introduction.any());
                 return ["main"];
             }],
-            ["are_you_bot", () => {
+            ["are_you_bot", async () => {
                 if(this.ephemeral.intent !== "are_you_bot") {
                     return [""];
                 }
@@ -129,7 +133,7 @@ class RobinLogic {
                 this.say(ROBIN_MESSAGES.bot.any());
                 return ["main"];
             }],
-            ["delete_account", () => {
+            ["delete_account", async () => {
                 if(this.ephemeral.intent !== "delete_account") {
                     return [""];
                 }
@@ -137,7 +141,7 @@ class RobinLogic {
                 this.say(ROBIN_MESSAGES.deleteAccountConfirmation.any());
                 return ["delete_account"];
             }],
-            ["add_expense", () => {
+            ["add_expense", async () => {
                 if(this.ephemeral.intent !== "add_expense") {
                     return [""];
                 }
@@ -155,7 +159,51 @@ class RobinLogic {
 
                 return ["add_expense!"];
             }],
-            ["confused", () => {
+            ["query_summary", async () => {
+                if(this.ephemeral.intent !== "query_summary") {
+                    return [""];
+                }
+
+                let interval: Interval;
+                if(this.ephemeral.interval) {
+                    interval = this.ephemeral.interval.value;
+                } else if(this.ephemeral.moment) {
+                    interval = Interval.fromDateTimes(
+                        this.ephemeral.moment.value.startOf(this.ephemeral.moment.grain),
+                        this.ephemeral.moment.value.endOf(this.ephemeral.moment.grain),
+                    );
+                } else {
+                    interval = Interval.fromDateTimes(
+                        DateTime.local().startOf("week"),
+                        DateTime.local().endOf("week"),
+                    );
+                }
+
+                const expenses = await this.session.queryExpenses(interval);
+                if(expenses.length === 0) {
+                    this.say(ROBIN_MESSAGES.noExpenses.any({
+                        start: interval.start.toLocaleString(DateTime.DATE_FULL),
+                        end: interval.end.toLocaleString(DateTime.DATE_FULL),
+                    }));
+                } else {
+                    this.say(ROBIN_MESSAGES.expenseSummary.any({
+                        start: interval.start.toLocaleString(DateTime.DATE_FULL),
+                        end: interval.end.toLocaleString(DateTime.DATE_FULL),
+                    }));
+
+                    this.say(
+                        expenses.map(e => `${e.incurredOn.toLocaleString(DateTime.DATE_FULL)}: ${e.item}, $${e.value}`)
+                            .join("\n\n"),
+                    );
+
+                    this.say(ROBIN_MESSAGES.expenseTotal.any({
+                        value: "$" + expenses.reduce((p, c) => p + c.value, 0).toFixed(2).replace(".00", ""),
+                    }));
+                }
+
+                return ["main"];
+            }],
+            ["confused", async () => {
                 if(this.messages.length === 0) {
                     if(this.ephemeral.thanks) {
                         this.say(ROBIN_MESSAGES.thanks.any());
@@ -173,7 +221,7 @@ class RobinLogic {
         ],
 
         "delete_account": [
-            ["confirmation", () => {
+            ["confirmation", async () => {
                 if(this.timeout(3)) {
                     return ["main", "timeout"];
                 } else if(this.ephemeral.intent === "feedback_positive") {
@@ -191,7 +239,7 @@ class RobinLogic {
         ],
 
         "add_expense": [
-            ["add_expense", () => {
+            ["add_expense", async () => {
                 if(this.ephemeral.item && !this.context.currentExpenseItem) {
                     this.context.currentExpenseItem = this.ephemeral.item;
                 }
@@ -236,7 +284,7 @@ class RobinLogic {
         ],
 
         "specify_expense_item": [
-            ["specify_expense_item", () => {
+            ["specify_expense_item", async () => {
                 if(!this.ephemeral.item) {
                     this.say(ROBIN_MESSAGES.specifyExpenseItem.any());
                     return [""];
@@ -248,7 +296,7 @@ class RobinLogic {
         ],
 
         "specify_expense_moment": [
-            ["specify_expense_moment", () => {
+            ["specify_expense_moment", async () => {
                 if(!this.ephemeral.moment && !this.ephemeral.interval) {
                     this.say(ROBIN_MESSAGES.specifyExpenseMoment.any());
                     return [""];
@@ -265,7 +313,7 @@ class RobinLogic {
         ],
 
         "specify_expense_value": [
-            ["specify_expense_value", () => {
+            ["specify_expense_value", async () => {
                 if(!this.ephemeral.money) {
                     this.say(ROBIN_MESSAGES.specifyExpenseValue.any());
                     return [""];
@@ -316,14 +364,14 @@ class RobinLogic {
         return this.context.lastMessageOn.diffNow("minutes").minutes > minutes;
     }
 
-    private execute(state: string): string {
+    private async execute(state: string): Promise<string> {
         const transitions = this.states[state] || this.states["init"];
         for(const t of transitions) {
             log.info(`SM trying ${state}.${t[0]}`);
-            const next = t[1]();
+            const next = await t[1]();
             if(next[0].endsWith("!")) {
                 log.info(`SM transitioning to ${state}.${next.join(":")}`);
-                return this.execute(next[0].slice(0, -1));
+                return await this.execute(next[0].slice(0, -1));
             } else if(next[0] !== "") {
                 log.info(`SM transitioning to ${state}.${next.join(":")}`);
                 return next[0];
@@ -334,11 +382,11 @@ class RobinLogic {
         return state;
     }
 
-    transition(): IRobinResult {
+    async transition(): Promise<IRobinResult> {
         this.messages = [];
 
         log.info(`SM starts with ${this.context.state}`);
-        this.context.state = this.execute(this.context.state);
+        this.context.state = await this.execute(this.context.state);
         log.info(`SM ends with ${this.context.state}`);
 
         this.context.messageCounter += 1;
@@ -528,6 +576,6 @@ export class Robin {
         Robin.processEntities(wit, ephemeral);
 
         // console.log((new RobinLogic(wit, ephemeral, context, session)).toGraphViz());
-        return (new RobinLogic(wit, ephemeral, context, session)).transition();
+        return await (new RobinLogic(wit, ephemeral, context, session)).transition();
     }
 }

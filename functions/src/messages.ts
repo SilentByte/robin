@@ -95,6 +95,15 @@ const RAW_MESSAGES = yaml.parse(`
   expenseCompleted:
     - Sweet! I just added '{{item}}' for {{value}} on {{moment}} to your expenses. 😉
 
+  expenseSummary:
+    - 'You have recorded the following expenses from {{start}} to {{end}}:'
+
+  expenseTotal:
+    - This amounts to a total of {{value}}.
+
+  noExpenses:
+    - You do not have incurred any expenses from {{start}} to {{end}}.
+
 `);
 
 type KeyValueMap = { [key: string]: string };

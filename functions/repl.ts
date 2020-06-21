@@ -8,9 +8,14 @@ import * as readline from "readline";
 import * as colors from "colors";
 import * as columnify from "columnify";
 import * as yaml from "yaml";
-import { DateTime } from "luxon";
+import {
+    DateTime,
+    Interval,
+} from "luxon";
+
 import {
     Robin,
+    IRobinExpense,
     defaultContext,
 } from "./src/robin";
 
@@ -50,6 +55,7 @@ function formatMessage(message: string) {
 (async () => {
     let context = defaultContext();
     let lastWit = null;
+    let expenses: IRobinExpense[] = [];
 
     repl: while(true) {
         const text = (await prompt()).trim();
@@ -69,6 +75,10 @@ function formatMessage(message: string) {
             context,
             text,
             timestamp: DateTime.local(),
+            async queryExpenses(interval: Interval): Promise<IRobinExpense[]> {
+                return expenses.filter(e => interval.contains(e.incurredOn))
+                    .sort((lhs, rhs) => lhs.incurredOn.toSeconds() - rhs.incurredOn.toSeconds());
+            },
         });
 
         lastWit = result.wit;
@@ -105,6 +115,16 @@ function formatMessage(message: string) {
         if(result.actions.length > 0) {
             console.log(yaml.stringify(result.actions));
             console.log("");
+
+            result.actions.forEach(a => {
+                if(a.type === "add_expense") {
+                    expenses.push({
+                        item: a.item,
+                        value: a.value,
+                        incurredOn: a.incurredOn,
+                    });
+                }
+            });
         }
 
         context = result.context;

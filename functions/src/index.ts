@@ -9,6 +9,7 @@ import * as admin from "firebase-admin";
 import axios from "axios";
 import {
     DateTime,
+    Interval,
     Settings as LuxonSettings,
 } from "luxon";
 
@@ -18,6 +19,7 @@ import { ROBIN_MESSAGES } from "./messages";
 import {
     defaultContext,
     IRobinContext,
+    IRobinExpense,
     Robin,
 } from "./robin";
 
@@ -82,19 +84,18 @@ async function fetchContext(id: string): Promise<IRobinContext> {
         return defaultContext();
     }
 
-    const fromISO = (iso: string) => data.lastMessageOn ? DateTime.fromISO(iso) : DateTime.fromSeconds(0);
     return {
         state: data.state,
         isActive: data.isActive,
         userName: data.userName,
-        lastMessageOn: fromISO(data.lastMessageOn),
+        lastMessageOn: DateTime.fromSeconds(data.lastMessageOn || 0),
         messageCounter: data.messageCounter || 0,
-        lastGreetingOn: fromISO(data.lastGreetingOn),
+        lastGreetingOn: DateTime.fromSeconds(data.lastGreetingOn || 0),
         jokeCounter: data.jokeCounter || 0,
-        lastJokeOn: fromISO(data.lastJokeOn),
+        lastJokeOn: DateTime.fromSeconds(data.lastJokeOn || 0),
         currentExpenseItem: data.currentExpenseItem,
         currentExpenseValue: data.currentExpenseValue,
-        currentExpenseIncurredOn: fromISO(data.currentExpenseIncurredOn),
+        currentExpenseIncurredOn: DateTime.fromSeconds(data.currentExpenseIncurredOn || 0),
     };
 }
 
@@ -104,7 +105,7 @@ async function updateContext(id: string, context: IRobinContext) {
     const serializedContext: any = Object.assign({}, context);
     Object.entries(context).forEach(([k, v]) => {
         if(v instanceof DateTime) {
-            serializedContext[k] = v.toISO();
+            serializedContext[k] = v.toUTC().toSeconds();
         }
     });
 
@@ -146,6 +147,25 @@ async function handleTelegram(request: functions.Request) {
             ...context,
             userName: message.from.first_name || message.from.username,
         },
+        async queryExpenses(interval: Interval): Promise<IRobinExpense[]> {
+            const snap = await db
+                .collection("users")
+                .doc(docId)
+                .collection("expenses")
+                .where("incurredOn", ">=", interval.start.toSeconds())
+                .where("incurredOn", "<=", interval.end.toSeconds())
+                .orderBy("incurredOn")
+                .get();
+
+            return snap.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    item: data.item,
+                    value: data.value,
+                    incurredOn: DateTime.fromSeconds(data.incurredOn),
+                };
+            });
+        },
     });
 
     const actions: Promise<any>[] = result.actions.map(a => {
@@ -153,7 +173,7 @@ async function handleTelegram(request: functions.Request) {
             return db.collection("users").doc(docId).collection("expenses").add({
                 item: a.item,
                 value: a.value,
-                incurredOn: a.incurredOn.toISO(),
+                incurredOn: a.incurredOn.toSeconds(),
             });
         }
 
@@ -181,6 +201,7 @@ export const robinTelegram = functions.https.onRequest(async (request, response)
     }
 });
 
+// noinspection JSUnusedGlobalSymbols
 export const deleteUser = functions.firestore
     .document("users/{id}")
     .onUpdate(async (change, _context) => {
