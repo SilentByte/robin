@@ -151,6 +151,17 @@ class RobinLogic {
 
                 return ["set_budget!"];
             }],
+            ["query_budget", async () => {
+                if(this.ephemeral.intent !== "query_budget") {
+                    return [""];
+                }
+
+                this.say(ROBIN_MESSAGES.queryBudget.any({
+                    value: `$${this.context.budget}`,
+                }));
+
+                return ["main"];
+            }],
             ["add_expense", async () => {
                 if(this.ephemeral.intent !== "add_expense") {
                     return [""];
