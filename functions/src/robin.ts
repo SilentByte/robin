@@ -85,7 +85,7 @@ export function defaultContext(): IRobinContext {
     return {
         state: "init",
         isActive: true,
-        userName: "anonymous",
+        userName: "",
         lastMessageOn: DateTime.local(),
         messageCounter: 0,
         lastGreetingOn: DateTime.fromSeconds(0),
