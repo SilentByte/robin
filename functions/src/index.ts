@@ -261,7 +261,7 @@ async function handleMessengerSingle(event: any) {
     }
 
     const result = await robin.process({
-        timestamp: DateTime.fromSeconds(event.timestamp), // TODO: Adjust timezone based on user location.
+        timestamp: DateTime.fromMillis(event.timestamp), // TODO: Adjust timezone based on user location.
         text: event.message.text,
         voice: event.message?.attachments && event.message.attachments[0]?.type === "audio"
             ? await convertAudioToMp3(await fetchMessengerFile(event.message.attachments[0].payload.url))
