@@ -10,16 +10,19 @@ const RAW_MESSAGES = yaml.parse(`
 
   messageTypeNotSupported:
     - Oh no, looks like I haven't received training for this message format yet. 😔
+    - I'm sorry, I'm not yet experienced enough with this message format. 😔
 
   accountIsInactive:
     - I'm sorry, this account is currently pending deletion. Once all your data has been
       removed, we can have a new start if you'd like. 😃
 
+    - This account is currently being deleted. Once this process is complete, we can talk
+      again if you'd like (although I will have forgotten you). 😃
+
   deleteAccountConfirmation:
     - If I understood you correctly, you would like me to delete your account and all data associated with it.
-      Is this correct? Once your account has been flagged for deletion it can no longer be used until the process
-      has been completed. All your data will be deleted and this process can not be undone. Would you like me to
-      delete your account?
+      Once your account has been flagged for deletion it can no longer be used until the process has been completed.
+      All your data will be deleted and this process can not be undone. Would you like me to delete your account?
 
   accountDeletionConfirmed:
     - Oh! I'm sorry to see you go. 😔 Alright then, I'll make sure your data is promptly deleted.
@@ -27,9 +30,11 @@ const RAW_MESSAGES = yaml.parse(`
 
   accountDeletionCanceled:
     - Alrighty! Thank's for staying! 😃
+    - Great! I was worried there for a second! 😃
 
   confused:
     - Hmm... 🤔 I'm sorry, I didn't quite get that...
+    - I think I misunderstood you... 🤔
 
   personalGreeting:
     - Hey {{ name }}, how's it going?
@@ -37,10 +42,12 @@ const RAW_MESSAGES = yaml.parse(`
 
   genericGreeting:
     - Hi there! 😃
+    - Oh, hello! 😃
 
   introduction:
     - My name is Robin, I'm your friendly accountant artificial intelligence.
     - I'm Robin! Always eager to help.
+    - I'm Robin! I'm here to assist you with your finances.
 
   bot:
     - I am an artificial intelligence with a user interfaced based on natural language processing. 😃
@@ -74,50 +81,68 @@ const RAW_MESSAGES = yaml.parse(`
 
   doneJoking:
     - I think that's enough for now. I'm an accountant, not a comedian. 😉
+    - I've told you all my jokes already. 😉
 
   joke:
-    - I can't imagine living without an accountant... It must be *accrual* life. 🌎 😂
+    - I can't imagine living without an accountant... It must be *accrual* life. 😂
     - I almost fell down the stairs the other day... I lost *my balance*. ☺️
     - Aww! 🤗 Thanks for your kind gift 🎁, I really *depreciate* it!
 
   specifyBudget:
     - What would you like your weekly budget to be?
+    - To what amount would you like to set your weekly budget?
 
   settingBudget:
     - I have set your budget to {{value}}.
+    - I changed your budget to {{value}}.
+    - Your budget is now {{value}}.
 
   queryBudget:
     - Your budget is currently set to {{value}} per week. This week's balance is at {{balance}}.
+    - Your weekly budget of {{value}} is currently at {{balance}}.
 
   specifyAffordabilityValue:
     - Please tell me how much you intend to spend.
+    - How much will that be?
 
   queryAffordability:
     - Assuming you spend {{value}}, your budget for the week would be at {{balance}}.
+    - If you spend {{value}}, your weekly budget's balance would be at {{balance}}.
 
   addExpense:
     - Alright, I'm going to add a new expense.
+    - Okay, adding a new expense.
 
   specifyExpenseItem:
     - What would you like to add?
+    - What item would you like to track?
 
   specifyExpenseMoment:
     - When was that expense incurred?
+    - When did you buy this?
 
   specifyExpenseValue:
     - What was the amount you paid for this expense?
+    - How much did you pay for this?
+    - What did that cost?
 
   expenseCompleted:
     - Sweet! I just added '{{item}}' for {{value}} on {{moment}} to your expenses. 😉
+    - I'm now tracking '{{item}}' bought on {{moment}} for {{value}}.
+    - I'll remember that you paid {{value}} for '{{item}}' on {{moment}}.
 
   expenseSummary:
-    - 'You have recorded the following expenses from {{start}} to {{end}}:'
+    - 'I have recorded the following expenses from {{start}} to {{end}}:'
+    - "Between {{start}} and {{end}}, I'm tracking the following expenses:"
 
   expenseTotal:
     - This amounts to a total of {{value}}.
+    - This is a total {{value}}.
+    - All this sums up to {{value}}.
 
   noExpenses:
     - You do not have incurred any expenses from {{start}} to {{end}}.
+    - I have not tracked any expenses between {{start}} and {{end}}.
 
 `);
 

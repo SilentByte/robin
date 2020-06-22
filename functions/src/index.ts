@@ -268,7 +268,6 @@ async function handleMessengerSingle(event: any) {
             : undefined,
         context: {
             ...context,
-            userName: "friend",
         },
         queryExpenses: (interval: Interval) => queryExpenses(docId, interval),
     });
