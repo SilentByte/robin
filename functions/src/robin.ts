@@ -6,12 +6,11 @@
 import axios from "axios";
 import {
     DateTime,
-    Interval, Settings,
+    Interval,
 } from "luxon";
 
 import log from "./log";
 import { ROBIN_MESSAGES } from "./messages";
-import defaultNumberingSystem = Settings.defaultNumberingSystem;
 
 export type RobinSentiment = "negative" | "neutral" | "positive";
 export type RobinDateTimeGrain = "day" | "week" | "month" | "year";
@@ -112,6 +111,14 @@ class RobinLogic {
         ],
 
         "main": [
+            ["request_help", async () => {
+                if(this.ephemeral.intent !== "request_help") {
+                    return [""];
+                }
+
+                this.say(ROBIN_MESSAGES.help.any());
+                return ["main"];
+            }],
             ["tell_joke", async () => {
                 if(this.ephemeral.intent !== "tell_joke") {
                     return [""];

@@ -32,6 +32,24 @@ const RAW_MESSAGES = yaml.parse(`
     - Alrighty! Thank's for staying! 😃
     - Great! I was worried there for a second! 😃
 
+  help:
+    - |
+      Here are some of the things I can do:
+
+      - Set your budget, e.g. "I want to set my weekly budget to 600 dollars".
+
+      - Find out how much of your budget is used up, e.g. "What is left in my budget?".
+
+      - Track expenses, e.g. "I bought food today for 30 dollars".
+
+      - Ask me about incurred expenses, e.g. "What did I spend from Monday to Thursday?".
+
+      - Check future expenses, e.g. "Can I afford to spend 60 dollars on fuel?".
+
+      - Delete your account and data, e.g. "Delete my account".
+
+      - I also know some jokes, let me know if you want to hear one. 😉
+
   confused:
     - Hmm... 🤔 I'm sorry, I didn't quite get that...
     - I think I misunderstood you... 🤔
